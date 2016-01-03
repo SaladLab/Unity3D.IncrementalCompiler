@@ -27,7 +27,7 @@ namespace IncrementalCompiler
 
         static int RunAsClient(string[] args)
         {
-            SetupLogger("RoslynCompiler.log");
+            SetupLogger("IncrementalCompiler.log");
 
             var logger = LogManager.GetLogger("Client");
             logger.Info("Started");
@@ -43,18 +43,35 @@ namespace IncrementalCompiler
 
             if (string.IsNullOrEmpty(options.Output))
             {
-                Console.WriteLine("No output");
+                logger.Error("No output");
                 return 1;
             }
 
-            // TODO: GET PARENT PROCESS ID
+            // Get unity process ID
 
-            var parentProcessId = Process.GetProcessesByName("Unity").FirstOrDefault().Id;
-            Console.WriteLine("" + parentProcessId);
+            var parentProcessId = 0;
+            var pd = options.Defines.FirstOrDefault(d => d.StartsWith("__UNITY_PROCESSID__"));
+            if (pd != null)
+            {
+                int.TryParse(pd.Substring(19), out parentProcessId);
+            }
+            else
+            {
+                var parentProcess = Process.GetProcessesByName("Unity").FirstOrDefault();
+                if (parentProcess != null)
+                    parentProcessId = parentProcess.Id;
+            }
 
-            // RUN
+            if (parentProcessId == 0)
+            {
+                logger.Error("No parent process");
+                return 1;
+            }
 
-            var done = false;
+            logger.Info("Parent process ID: {0}", parentProcessId);
+
+            // Run
+
             Process serverProcess = null;
             while (true)
             {
@@ -62,16 +79,17 @@ namespace IncrementalCompiler
                 {
                     var w = new Stopwatch();
                     w.Start();
-                    Console.WriteLine("Start to Request");
+                    logger.Info("Request to server");
                     CompilerServiceClient.Request(parentProcessId, currentPath, options);
                     w.Stop();
-                    Console.WriteLine("Done: " + w.Elapsed.TotalSeconds + "sec");
+                    logger.Info("Done: " + w.Elapsed.TotalSeconds + "sec");
                     return 0;
                 }
                 catch (EndpointNotFoundException)
                 {
                     if (serverProcess == null)
                     {
+                        logger.Info("Spawn server");
                         serverProcess = Process.Start(
                             new ProcessStartInfo
                             {
@@ -79,7 +97,7 @@ namespace IncrementalCompiler
                                 Arguments = "-server " + parentProcessId,
                                 WindowStyle = ProcessWindowStyle.Hidden
                             });
-                        Thread.Sleep(1000);
+                        Thread.Sleep(100);
                     }
                     else
                     {
@@ -91,7 +109,7 @@ namespace IncrementalCompiler
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    logger.Error(e, "Error in request");
                     return 1;
                 }
             }
@@ -99,7 +117,7 @@ namespace IncrementalCompiler
 
         static int RunAsServer(string[] args)
         {
-            SetupLogger("RoslynCompiler-Server.log");
+            SetupLogger("IncrementalCompiler-Server.log");
 
             var logger = LogManager.GetLogger("Server");
             logger.Info("Started");
@@ -120,7 +138,7 @@ namespace IncrementalCompiler
 
             var consoleTarget = new ColoredConsoleTarget
             {
-                Layout = @"${date:format=HH\:mm\:ss} ${logger} ${message}"
+                Layout = @"${date}|${logger}|${message}|${exception:format=tostring}"
             };
             config.AddTarget("console", consoleTarget);
             config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, consoleTarget));
@@ -129,7 +147,7 @@ namespace IncrementalCompiler
             var fileTarget = new FileTarget
             {
                 FileName = logDirectory + fileName,
-                Layout = @"${date:format=HH\:mm\:ss} ${logger} ${message}"
+                Layout = @"${longdate} ${uppercase:${level}}|${logger}|${message}|${exception:format=tostring}"
             };
             config.AddTarget("file", fileTarget);
             config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, fileTarget));

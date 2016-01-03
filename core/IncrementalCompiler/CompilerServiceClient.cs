@@ -1,4 +1,6 @@
-﻿using System.ServiceModel;
+﻿using NLog;
+using System;
+using System.ServiceModel;
 
 namespace IncrementalCompiler
 {
@@ -15,7 +17,6 @@ namespace IncrementalCompiler
             };
             var ep = new EndpointAddress(address);
             var channel = ChannelFactory<ICompilerService>.CreateChannel(binding, ep);
-
             channel.Build(currentPath, options);
         }
     }

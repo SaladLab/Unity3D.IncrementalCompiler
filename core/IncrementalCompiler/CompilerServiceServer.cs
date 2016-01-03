@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.ServiceModel;
-using System.Threading;
 using NLog;
 
 namespace IncrementalCompiler
@@ -30,18 +27,29 @@ namespace IncrementalCompiler
 
             // open service
 
-            var address = "net.pipe://localhost/Unity3D.IncrementalCompiler/" + parentProcessId;
-            var serviceHost = new ServiceHost(typeof(CompilerService));
-            var binding = new NetNamedPipeBinding(NetNamedPipeSecurityMode.None)
+            try
             {
-                MaxBufferSize = 1048576,
-                MaxReceivedMessageSize = 1048576
-            };
-            serviceHost.AddServiceEndpoint(typeof(ICompilerService), binding, address);
-            serviceHost.Open();
+                var address = "net.pipe://localhost/Unity3D.IncrementalCompiler/" + parentProcessId;
+                var serviceHost = new ServiceHost(typeof(CompilerService));
+                var binding = new NetNamedPipeBinding(NetNamedPipeSecurityMode.None)
+                {
+                    MaxBufferSize = 1048576,
+                    MaxReceivedMessageSize = 1048576
+                };
+                serviceHost.AddServiceEndpoint(typeof(ICompilerService), binding, address);
+                serviceHost.Open();
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Service Host got an error");
+                return 1;
+            }
 
             if (parentProcess != null)
+            {
                 parentProcess.WaitForExit();
+                logger.Info("Parent process just exited. (PID={0})", parentProcess.Id);
+            }
 
             return 0;
         }
