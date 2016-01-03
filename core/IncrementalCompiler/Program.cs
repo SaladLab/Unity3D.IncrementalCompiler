@@ -11,11 +11,15 @@ using System.ServiceModel;
 
 namespace IncrementalCompiler
 {
-    class Program
+    partial class Program
     {
         static int Main(string[] args)
         {
-            if (args.Length > 0 && args[0] == "-server")
+            if (args.Length > 0 && args[0] == "-dev")
+            {
+                return RunAsDev(args);
+            }
+            else if (args.Length > 0 && args[0] == "-server")
             {
                 return RunAsServer(args);
             }
@@ -33,7 +37,7 @@ namespace IncrementalCompiler
             logger.Info("Started");
 
             var currentPath = Directory.GetCurrentDirectory();
-            var options = new CompilerOptions();
+            var options = new CompileOptions();
             options.ParseArgument(args, currentPath);
             options.References = options.References.Distinct().ToList();
             options.Files = options.Files.Distinct().ToList();
@@ -80,10 +84,14 @@ namespace IncrementalCompiler
                     var w = new Stopwatch();
                     w.Start();
                     logger.Info("Request to server");
-                    CompilerServiceClient.Request(parentProcessId, currentPath, options);
+                    var result = CompilerServiceClient.Request(parentProcessId, currentPath, options);
                     w.Stop();
-                    logger.Info("Done: " + w.Elapsed.TotalSeconds + "sec");
-                    return 0;
+                    logger.Info("Done: Succeeded={0}. Duration={1}sec.", result.Succeeded, w.Elapsed.TotalSeconds);
+                    foreach (var warning in result.Warnings)
+                        logger.Info(warning);
+                    foreach (var error in result.Errors)
+                        logger.Info(error);
+                    return result.Succeeded ? 0 : 1;
                 }
                 catch (EndpointNotFoundException)
                 {

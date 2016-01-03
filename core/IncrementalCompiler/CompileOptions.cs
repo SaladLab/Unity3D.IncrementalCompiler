@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 namespace IncrementalCompiler
 {
     [DataContract]
-    public class CompilerOptions
+    public class CompileOptions
     {
         [DataMember] public string AssemblyName;
         [DataMember] public string Output;

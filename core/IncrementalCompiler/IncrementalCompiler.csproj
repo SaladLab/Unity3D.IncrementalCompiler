@@ -64,13 +64,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CompileOptions.cs" />
     <Compile Include="Compiler.cs" />
-    <Compile Include="CompilerOptions.cs" />
+    <Compile Include="CompileResult.cs" />
     <Compile Include="CompilerService.cs" />
     <Compile Include="CompilerServiceClient.cs" />
     <Compile Include="CompilerServiceServer.cs" />
     <Compile Include="FileTimeList.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Program.Dev.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

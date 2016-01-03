@@ -1,17 +1,15 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.ServiceModel;
 
 namespace IncrementalCompiler
 {
-    [ServiceContract(Namespace = "http://github.com/Unity3D.RoslynCompiler")]
+    [ServiceContract(Namespace = "https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler")]
     public interface ICompilerService
     {
         [OperationContract]
-        bool Build(string projectPath, CompilerOptions options);
+        CompileResult Build(string projectPath, CompileOptions options);
     }
 
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, IncludeExceptionDetailInFaults = true)]
@@ -21,7 +19,7 @@ namespace IncrementalCompiler
         private string _projectPath;
         private Dictionary<string, Compiler> _compilerMap;
 
-        public bool Build(string projectPath, CompilerOptions options)
+        public CompileResult Build(string projectPath, CompileOptions options)
         {
             _logger.Info("Build(projectPath={0}, output={1})", projectPath, options.Output);
 
@@ -45,15 +43,13 @@ namespace IncrementalCompiler
 
             try
             {
-                compiler.Build(options);
+                return compiler.Build(options);
             }
             catch (Exception e)
             {
                 _logger.Error(e, "Error in build.");
                 throw;
             }
-
-            return true;
         }
     }
 }

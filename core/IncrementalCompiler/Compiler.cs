@@ -5,35 +5,39 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Linq;
 using System.Text;
+using NLog;
 
 namespace IncrementalCompiler
 {
     public class Compiler
     {
+        private Logger _logger = LogManager.GetLogger("Compiler");
         private CSharpCompilation _compilation;
-        private CompilerOptions _options;
+        private CompileOptions _options;
         private FileTimeList _referenceFileList;
         private FileTimeList _sourceFileList;
         private Dictionary<string, MetadataReference> _referenceMap;
         private Dictionary<string, SyntaxTree> _sourceMap;
 
-        public void Build(CompilerOptions options)
+        public CompileResult Build(CompileOptions options)
         {
             if (_compilation == null ||
                 _options.AssemblyName != options.AssemblyName ||
                 _options.Output != options.Output ||
                 Enumerable.SequenceEqual(_options.Defines, options.Defines) == false)
             {
-                BuildFull(options);
+                return BuildFull(options);
             }
             else
             {
-                BuildIncremental(options);
+                return BuildIncremental(options);
             }
         }
 
-        private void BuildFull(CompilerOptions options)
+        private CompileResult BuildFull(CompileOptions options)
         {
+            var result = new CompileResult();
+
             _options = options;
 
             _referenceFileList = new FileTimeList();
@@ -57,11 +61,15 @@ namespace IncrementalCompiler
                 references: _referenceMap.Values,
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-            Emit();
+            Emit(result);
+
+            return result;
         }
 
-        private void BuildIncremental(CompilerOptions options)
+        private CompileResult BuildIncremental(CompileOptions options)
         {
+            var result = new CompileResult();
+
             _options = options;
 
             // TODO: guard failure of compilation, ...
@@ -111,7 +119,9 @@ namespace IncrementalCompiler
                 _sourceMap.Remove(file);
             }
 
-            Emit();
+            Emit(result);
+
+            return result;
         }
 
         private MetadataReference CreateReference(string file)
@@ -127,30 +137,29 @@ namespace IncrementalCompiler
                                               Encoding.UTF8);
         }
 
-        private void Emit()
+        private void Emit(CompileResult result)
         {
             using (var peStream = new FileStream(_options.Output, FileMode.Create))
             using (var pdbStream = new FileStream(Path.ChangeExtension(_options.Output, ".pdb"), FileMode.Create))
             {
-                var result = _compilation.Emit(peStream, pdbStream);
+                var r = _compilation.Emit(peStream, pdbStream);
 
-                if (!result.Success)
+                foreach (var d in r.Diagnostics)
                 {
-                    var failures = result.Diagnostics.Where(diagnostic =>
-                        diagnostic.IsWarningAsError ||
-                        diagnostic.Severity == DiagnosticSeverity.Error);
-
-                    foreach (var diagnostic in failures)
-                    {
-                        var line = diagnostic.Location.GetLineSpan();
-                        Console.Error.WriteLine("{0}({1}): {2} {3}",
-                            line.Path,
-                            line.StartLinePosition.Line + 1,
-                            diagnostic.Id,
-                            diagnostic.GetMessage());
-                    }
+                    if (d.Severity == DiagnosticSeverity.Warning && d.IsWarningAsError == false)
+                        result.Warnings.Add(GetDiagnosticString(d));
+                    else if (d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
+                        result.Errors.Add(GetDiagnosticString(d));
                 }
+
+                result.Succeeded = r.Success;
             }
+        }
+
+        private static string GetDiagnosticString(Diagnostic diagnostic)
+        {
+            var line = diagnostic.Location.GetLineSpan();
+            return $"{line.Path}({line.StartLinePosition.Line + 1}): {diagnostic.Id} {diagnostic.GetMessage()}";
         }
     }
 }
