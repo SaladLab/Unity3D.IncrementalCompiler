@@ -39,6 +39,7 @@ namespace IncrementalCompiler
         {
             var result = new CompileResult();
 
+            _logger.Info("BuildFull");
             _options = options;
 
             _referenceFileList = new FileTimeList();
@@ -71,21 +72,22 @@ namespace IncrementalCompiler
         {
             var result = new CompileResult();
 
+            _logger.Info("BuildIncremental");
             _options = options;
-
-            // TODO: guard failure of compilation, ...
 
             // update reference files
 
             var referenceChanges = _referenceFileList.Update(options.References);
             foreach (var file in referenceChanges.Added)
             {
+                _logger.Info("+ {0}", file);
                 var reference = CreateReference(file);
                 _compilation = _compilation.AddReferences(reference);
                 _referenceMap.Add(file, reference);
             }
             foreach (var file in referenceChanges.Changed)
             {
+                _logger.Info("* {0}", file);
                 var reference = CreateReference(file);
                 _compilation = _compilation.RemoveReferences(_referenceMap[file])
                                            .AddReferences(reference);
@@ -93,6 +95,7 @@ namespace IncrementalCompiler
             }
             foreach (var file in referenceChanges.Removed)
             {
+                _logger.Info("- {0}", file);
                 _compilation = _compilation.RemoveReferences(_referenceMap[file]);
                 _referenceMap.Remove(file);
             }
@@ -103,12 +106,14 @@ namespace IncrementalCompiler
             var parseOption = new CSharpParseOptions(LanguageVersion.CSharp6, DocumentationMode.Parse, SourceCodeKind.Regular, options.Defines);
             foreach (var file in sourceChanges.Added)
             {
+                _logger.Info("+ {0}", file);
                 var syntaxTree = ParseSource(file, parseOption);
                 _compilation = _compilation.AddSyntaxTrees(syntaxTree);
                 _sourceMap.Add(file, syntaxTree);
             }
             foreach (var file in sourceChanges.Changed)
             {
+                _logger.Info("* {0}", file);
                 var syntaxTree = ParseSource(file, parseOption);
                 _compilation = _compilation.RemoveSyntaxTrees(_sourceMap[file])
                                            .AddSyntaxTrees(syntaxTree);
@@ -116,6 +121,7 @@ namespace IncrementalCompiler
             }
             foreach (var file in sourceChanges.Removed)
             {
+                _logger.Info("- {0}", file);
                 _compilation = _compilation.RemoveSyntaxTrees(_sourceMap[file]);
                 _sourceMap.Remove(file);
             }

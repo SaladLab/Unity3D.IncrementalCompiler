@@ -46,7 +46,7 @@ namespace IncrementalCompiler
             var j = 0;
             while (i < _files.Count && j < oldFiles.Count)
             {
-                var c = Comparer<string>.Default.Compare(_files[i].Item1, oldFiles[i].Item1);
+                var c = Comparer<string>.Default.Compare(_files[i].Item1, oldFiles[j].Item1);
                 if (c == 0)
                 {
                     if (_files[i].Item2 != oldFiles[j].Item2)

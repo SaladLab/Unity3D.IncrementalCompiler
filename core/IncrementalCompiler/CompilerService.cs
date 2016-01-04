@@ -25,10 +25,10 @@ namespace IncrementalCompiler
 
             if (string.IsNullOrEmpty(_projectPath) || _projectPath != projectPath)
             {
-                // Flush existing
-
+                // create new one
                 _compilerMap = new Dictionary<string, Compiler>();
-                _logger.Info("Flush old project. (Project={0})", _projectPath);
+                if (string.IsNullOrEmpty(_projectPath) == false)
+                    _logger.Info("Flush old project. (Project={0})", _projectPath);
             }
 
             _projectPath = projectPath;
