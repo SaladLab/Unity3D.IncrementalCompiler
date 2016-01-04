@@ -15,12 +15,15 @@ namespace IncrementalCompiler
     {
         static int RunAsDev(string[] args)
         {
-            SetupLogger("IncrementalCompiler.log");
+            SetupLogger("IncrementalCompiler.log", true);
+
+            var workDirectory = args[1];
+            var reponseFile = args[2];
 
             var logger = LogManager.GetLogger("Dev");
             logger.Info("Started");
 
-            Directory.SetCurrentDirectory(@"..\..\..\..\samples\Basic");
+            Directory.SetCurrentDirectory(workDirectory);
             var curPath = Directory.GetCurrentDirectory();
 
             var options = new CompileOptions();
@@ -32,9 +35,9 @@ namespace IncrementalCompiler
                 "-r:" + @"C:/Program Files/Unity/Editor/Data\Mono/lib/mono/2.0/System.dll",
                 "-r:" + @"C:/Program Files/Unity/Editor/Data\Mono/lib/mono/2.0/System.Core.dll",
                 "-r:" + @"C:/Program Files/Unity/Editor/Data\Mono/lib/mono/2.0/System.Xml.dll",
-                @"@Temp/UnityTempFile-abde314464ae1bc4cae691cbf128cb26",
-            },
-            curPath);
+                "@Temp/" + reponseFile,
+            });
+            options.WorkDirectory = curPath;
             options.References = options.References.Distinct().ToList();
             options.Files = options.Files.Distinct().ToList();
 
@@ -94,7 +97,6 @@ namespace IncrementalCompiler
                     return 1;
                 }
             }
-            return 0;
         }
     }
 }

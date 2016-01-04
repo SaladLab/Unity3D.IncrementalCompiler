@@ -22,9 +22,10 @@ namespace IncrementalCompiler
         public CompileResult Build(CompileOptions options)
         {
             if (_compilation == null ||
+                _options.WorkDirectory != options.WorkDirectory ||
                 _options.AssemblyName != options.AssemblyName ||
                 _options.Output != options.Output ||
-                Enumerable.SequenceEqual(_options.Defines, options.Defines) == false)
+                _options.Defines.SequenceEqual(options.Defines) == false)
             {
                 return BuildFull(options);
             }
@@ -57,9 +58,9 @@ namespace IncrementalCompiler
 
             _compilation = CSharpCompilation.Create(
                 options.AssemblyName,
-                syntaxTrees: _sourceMap.Values,
-                references: _referenceMap.Values,
-                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                _sourceMap.Values,
+                _referenceMap.Values,
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
             Emit(result);
 
@@ -126,40 +127,41 @@ namespace IncrementalCompiler
 
         private MetadataReference CreateReference(string file)
         {
-            return MetadataReference.CreateFromFile(file);
+            return MetadataReference.CreateFromFile(Path.Combine(_options.WorkDirectory, file));
         }
 
         private SyntaxTree ParseSource(string file, CSharpParseOptions parseOption)
         {
-            return CSharpSyntaxTree.ParseText(File.ReadAllText(file),
-                                              parseOption,
-                                              file,
-                                              Encoding.UTF8);
+            var text = File.ReadAllText(Path.Combine(_options.WorkDirectory, file));
+            return CSharpSyntaxTree.ParseText(text, parseOption, file, Encoding.UTF8);
         }
 
         private void Emit(CompileResult result)
         {
-            using (var peStream = new FileStream(_options.Output, FileMode.Create))
-            using (var pdbStream = new FileStream(Path.ChangeExtension(_options.Output, ".pdb"), FileMode.Create))
+            var outputFile = Path.Combine(_options.WorkDirectory, _options.Output);
+            var debugFile = Path.Combine(_options.WorkDirectory, Path.ChangeExtension(_options.Output, ".pdb"));
+            using (var peStream = new FileStream(outputFile, FileMode.Create))
+            using (var pdbStream = new FileStream(debugFile, FileMode.Create))
             {
                 var r = _compilation.Emit(peStream, pdbStream);
 
                 foreach (var d in r.Diagnostics)
                 {
                     if (d.Severity == DiagnosticSeverity.Warning && d.IsWarningAsError == false)
-                        result.Warnings.Add(GetDiagnosticString(d));
+                        result.Warnings.Add(GetDiagnosticString(d, "warning"));
                     else if (d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
-                        result.Errors.Add(GetDiagnosticString(d));
+                        result.Errors.Add(GetDiagnosticString(d, "error"));
                 }
 
                 result.Succeeded = r.Success;
             }
         }
 
-        private static string GetDiagnosticString(Diagnostic diagnostic)
+        private static string GetDiagnosticString(Diagnostic diagnostic, string type)
         {
             var line = diagnostic.Location.GetLineSpan();
-            return $"{line.Path}({line.StartLinePosition.Line + 1}): {diagnostic.Id} {diagnostic.GetMessage()}";
+            return $"{line.Path}({line.StartLinePosition.Line + 1},{line.StartLinePosition.Character + 1}): " + 
+                   $"{type} {diagnostic.Id}: {diagnostic.GetMessage()}";
         }
     }
 }

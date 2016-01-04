@@ -8,13 +8,14 @@ namespace IncrementalCompiler
     [DataContract]
     public class CompileOptions
     {
+        [DataMember] public string WorkDirectory;
         [DataMember] public string AssemblyName;
         [DataMember] public string Output;
         [DataMember] public List<string> Defines = new List<string>();
         [DataMember] public List<string> References = new List<string>();
         [DataMember] public List<string> Files = new List<string>();
 
-        public void ParseArgument(string[] args, string currentPath)
+        public void ParseArgument(string[] args)
         {
             foreach (var arg in args)
             {
@@ -39,7 +40,7 @@ namespace IncrementalCompiler
                     {
                         case "r":
                         case "reference":
-                            References.Add(Path.Combine(currentPath, value.Trim('"')));
+                            References.Add(value.Trim('"'));
                             break;
 
                         case "define":
@@ -47,7 +48,7 @@ namespace IncrementalCompiler
                             break;
 
                         case "out":
-                            Output = Path.Combine(currentPath, value.Trim('"'));
+                            Output = value.Trim('"');
                             AssemblyName = Path.GetFileNameWithoutExtension(value);
                             break;
                     }
@@ -55,13 +56,12 @@ namespace IncrementalCompiler
                 else if (arg.StartsWith("@"))
                 {
                     // more options in specified file
-                    var argPath = Path.Combine(currentPath, arg.Substring(1));
-                    var lines = File.ReadAllLines(argPath);
-                    ParseArgument(lines, currentPath);
+                    var lines = File.ReadAllLines(arg.Substring(1));
+                    ParseArgument(lines);
                 }
                 else
                 {
-                    var path = Path.Combine(currentPath, arg.Trim('"'));
+                    var path = arg.Trim('"');
                     Files.Add(path);
                 }
             }

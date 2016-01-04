@@ -23,22 +23,44 @@ namespace IncrementalCompiler
             {
                 return RunAsServer(args);
             }
-            else
+            else if (args.Length > 0 && args[0] != "/?")
             {
                 return RunAsClient(args);
             }
+            else
+            {
+                ShowUsage();
+                return 1;
+            }
+        }
+
+        static void ShowUsage()
+        {
+            Console.WriteLine("Unity3D Incremental C# Compiler using Roslyn");
+            Console.WriteLine("https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler/");
+            Console.WriteLine("");
+            Console.WriteLine("* Client");
+            Console.WriteLine("  -out:<file>        Specifies the output file name.");
+            Console.WriteLine("  -r:<file>          References metadata from the specified assembly files.");
+            Console.WriteLine("  -define:<file>     Defines conditional compilation symbols.");
+            Console.WriteLine("  @<file>            Reads a response file for more options.");
+            Console.WriteLine("");
+            Console.WriteLine("* Server");
+            Console.WriteLine("  -server processid  Spawn server for specified process.");
+            Console.WriteLine("");
         }
 
         static int RunAsClient(string[] args)
         {
-            SetupLogger("IncrementalCompiler.log");
+            SetupLogger("IncrementalCompiler.log", false);
 
             var logger = LogManager.GetLogger("Client");
             logger.Info("Started");
 
             var currentPath = Directory.GetCurrentDirectory();
             var options = new CompileOptions();
-            options.ParseArgument(args, currentPath);
+            options.ParseArgument(args);
+            options.WorkDirectory = currentPath;
             options.References = options.References.Distinct().ToList();
             options.Files = options.Files.Distinct().ToList();
 
@@ -87,10 +109,18 @@ namespace IncrementalCompiler
                     var result = CompilerServiceClient.Request(parentProcessId, currentPath, options);
                     w.Stop();
                     logger.Info("Done: Succeeded={0}. Duration={1}sec.", result.Succeeded, w.Elapsed.TotalSeconds);
+                    Console.WriteLine("Compile {0}. (Duration={1}sec)", result.Succeeded ? "succeeded" : "failed",
+                                                                        w.Elapsed.TotalSeconds);
                     foreach (var warning in result.Warnings)
+                    {
                         logger.Info(warning);
+                        Console.Error.WriteLine(warning);
+                    }
                     foreach (var error in result.Errors)
+                    {
                         logger.Info(error);
+                        Console.Error.WriteLine(error);
+                    }
                     return result.Succeeded ? 0 : 1;
                 }
                 catch (EndpointNotFoundException)
@@ -118,6 +148,7 @@ namespace IncrementalCompiler
                 catch (Exception e)
                 {
                     logger.Error(e, "Error in request");
+                    Console.Error.WriteLine("Internal error: " + e);
                     return 1;
                 }
             }
@@ -125,7 +156,7 @@ namespace IncrementalCompiler
 
         static int RunAsServer(string[] args)
         {
-            SetupLogger("IncrementalCompiler-Server.log");
+            SetupLogger("IncrementalCompiler-Server.log", false);
 
             var logger = LogManager.GetLogger("Server");
             logger.Info("Started");
@@ -140,16 +171,19 @@ namespace IncrementalCompiler
             return CompilerServiceServer.Run(logger, parentProcessId);
         }
 
-        static void SetupLogger(string fileName)
+        static void SetupLogger(string fileName, bool useConsole)
         {
             var config = new LoggingConfiguration();
 
-            var consoleTarget = new ColoredConsoleTarget
+            if (useConsole)
             {
-                Layout = @"${date}|${logger}|${message}|${exception:format=tostring}"
-            };
-            config.AddTarget("console", consoleTarget);
-            config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, consoleTarget));
+                var consoleTarget = new ColoredConsoleTarget
+                {
+                    Layout = @"${date}|${logger}|${message}|${exception:format=tostring}"
+                };
+                config.AddTarget("console", consoleTarget);
+                config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, consoleTarget));
+            }
 
             var logDirectory = Directory.Exists(".\\Temp") ? ".\\Temp\\" : ".\\";
             var fileTarget = new FileTarget
