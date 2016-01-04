@@ -29,9 +29,9 @@ Target "Build" (fun _ ->
 )
 
 Target "Package" (fun _ ->
-    // pack IncrementalCompiler.exe with dependent module dlls to ics.exe
+    // pack IncrementalCompiler.exe with dependent module dlls to packed one
     let errorCode = Shell.Exec("./packages/ILRepack/tools/ILRepack.exe",
-                               "/wildcards /out:ics.exe IncrementalCompiler.exe *.dll",
+                               "/wildcards /out:IncrementalCompiler.packed.exe IncrementalCompiler.exe *.dll",
                                "./core/IncrementalCompiler/bin/Release")
     // let's make package
     for target in ["Unity4"; "Unity5"] do
@@ -43,9 +43,9 @@ Target "Package" (fun _ ->
         CreateDir editorDir
         CreateDir compilerDir
         // copy output files
-        "./core/IncrementalCompiler/bin/Release/ics.exe" |> CopyFile compilerDir
+        "./core/IncrementalCompiler/bin/Release/IncrementalCompiler.packed.exe" |> CopyFile (compilerDir @@ "IncrementalCompiler.exe")
         "./extra/CompilerPlugin." + target + "/bin/Release/Unity.PureCSharpTests.dll" |> CopyFile (editorDir @@ "CompilerPlugin.dll")
-        "./extra/UniversalCompiler/bin/Release/smcs.exe" |> CopyFile compilerDir
+        "./extra/UniversalCompiler/bin/Release/UniversalCompiler.exe" |> CopyFile compilerDir
         "./tools/pdb2mdb/pdb2mdb.exe" |> CopyFile compilerDir
         // create zipped packages
         !! (targetDir @@ "**") |> Zip targetDir (binDir @@ "IncrementalCompiler." + target + ".zip")

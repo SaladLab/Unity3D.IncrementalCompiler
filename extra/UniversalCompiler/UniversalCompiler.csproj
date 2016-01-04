@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UniversalCompiler</RootNamespace>
-    <AssemblyName>smcs</AssemblyName>
+    <AssemblyName>UniversalCompiler</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,7 +40,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compilers\Compiler.cs" />
+    <Compile Include="Compilers\Incremental60Compiler.cs" />
+    <Compile Include="Compilers\Microsoft60Compiler.cs" />
+    <Compile Include="Compilers\Mono30Compiler.cs" />
+    <Compile Include="Compilers\Mono50Compiler.cs" />
+    <Compile Include="Compilers\Mono60Compiler.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="Platform.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

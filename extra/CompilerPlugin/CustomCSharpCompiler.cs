@@ -22,7 +22,7 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 	private string GetCompilerPath(List<string> arguments)
 	{
 		var basePath = Path.Combine(Directory.GetCurrentDirectory(), "Compiler");
-		var compilerPath = Path.Combine(basePath, "smcs.exe");
+		var compilerPath = Path.Combine(basePath, "UniversalCompiler.exe");
 		if (File.Exists(compilerPath))
 		{
 			return compilerPath;
