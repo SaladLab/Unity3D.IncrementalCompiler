@@ -16,7 +16,7 @@ Unzip a release zip file to your Unity project top-most directory.
 
 ### Benchmark
 
-Brieft [Benchmark](./docs/Benchmark.md)
+Brief [Benchmark](./docs/Benchmark.md)
 
 ### Related works
 
