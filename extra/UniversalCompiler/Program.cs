@@ -176,7 +176,8 @@ internal class Program
 			logger?.Append($"{lineIndex++}: {line}");
 		}
 
-		if (process.ExitCode != 0 || compilerVersion != CompilerVersion.Version6Microsoft)
+		if (process.ExitCode != 0 || (compilerVersion != CompilerVersion.Version6Microsoft &&
+									  compilerVersion != CompilerVersion.Version6IncrementalCompiler))
 		{
 			return process.ExitCode;
 		}
