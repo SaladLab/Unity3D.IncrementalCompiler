@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/iaofuixbjakmwl4q?svg=true)](https://ci.appveyor.com/project/veblush/unity3d-incrementalcompiler)
+
 # Unity3D.IncrementalCompiler
 
 Unity3D Incremental C# Compiler using [Roslyn](https://github.com/dotnet/roslyn).
