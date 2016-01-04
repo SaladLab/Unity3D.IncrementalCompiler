@@ -1,0 +1,1 @@
+XCOPY /S ..\..\bin\Unity5\* .

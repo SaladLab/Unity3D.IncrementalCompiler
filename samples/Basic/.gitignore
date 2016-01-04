@@ -22,3 +22,7 @@ sysinfo.txt
 
 # UnityPackage
 *.unitypackage
+
+# IncrementalCompiler
+/Assets/Editor/CompilerPlugin*
+/Compiler/
