@@ -66,7 +66,7 @@ Target "Help" (fun _ ->
 
 // Build order
 "Clean"
-//  ==> "Build"
+  ==> "Build"
   ==> "Package"
 
 RunTargetOrDefault "Help"
