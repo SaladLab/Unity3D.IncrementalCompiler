@@ -348,7 +348,20 @@ internal class Program
 
 		if (CurrentPlatform == Platform.Windows)
 		{
-			startInfo = new ProcessStartInfo(processPath, processArguments);
+			switch (processRuntime)
+			{
+				case ProcessRuntime.CLR20:
+					var runtimePath = Path.Combine(unityEditorDataDir, @"Mono/bin/mono.exe");
+					startInfo = new ProcessStartInfo(runtimePath, $"\"{processPath}\" {processArguments}");
+					break;
+
+				case ProcessRuntime.CLR40:
+					startInfo = new ProcessStartInfo(processPath, processArguments);
+					break;
+
+				default:
+					throw new ArgumentOutOfRangeException(nameof(processRuntime), processRuntime, null);
+			}
 		}
 		else
 		{
