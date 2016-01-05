@@ -6,13 +6,12 @@ using System.Linq;
 internal class Incremental60Compiler : Compiler
 {
 	public override string Name => "Incremental C# Compiler C# 6.0";
-	public override bool NeedsPdb2MdbConversion => true;
+	public override bool NeedsPdb2MdbConversion => false;
 
 	public Incremental60Compiler(Logger logger, string directory)
-		: base(logger, Path.Combine(directory, "IncrementalCompiler.exe"), Path.Combine(directory, "pdb2mdb.exe")) { }
+		: base(logger, Path.Combine(directory, "IncrementalCompiler.exe")) { }
 
-	public static bool IsAvailable(string directory) => File.Exists(Path.Combine(directory, "IncrementalCompiler.exe")) &&
-														File.Exists(Path.Combine(directory, "pdb2mdb.exe"));
+	public static bool IsAvailable(string directory) => File.Exists(Path.Combine(directory, "IncrementalCompiler.exe"));
 
 	protected override Process CreateCompilerProcess(Platform platform, string unityEditorDataDir, string responseFile)
 	{

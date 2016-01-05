@@ -39,3 +39,12 @@ This benchmark is measured with a proprietary project in my company.
 | Assembly-CSharp           |    4.60 + 0.82 |
 | Assembly-CSharp-Editor    |    1.67 + 0.47 |
 | Total                     |      9.2 (49%) |
+
+#### Roslyn (Incremental with embedded MdbWriter)
+
+| Project                   | Duration (sec) |
+| :------------------------ | -------------: |
+| Assembly-CSharp-firstpass |           1.31 |
+| Assembly-CSharp           |           3.60 |
+| Assembly-CSharp-Editor    |           1.00 |
+| Total                     |     5.91 (31%) |

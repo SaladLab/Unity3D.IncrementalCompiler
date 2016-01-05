@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Linq;
 using System.Text;
+using Mono.CompilerServices.SymbolWriter;
 using NLog;
 
 namespace IncrementalCompiler
@@ -145,11 +146,11 @@ namespace IncrementalCompiler
         private void Emit(CompileResult result)
         {
             var outputFile = Path.Combine(_options.WorkDirectory, _options.Output);
-            var debugFile = Path.Combine(_options.WorkDirectory, Path.ChangeExtension(_options.Output, ".pdb"));
+            var debugFile = Path.Combine(_options.WorkDirectory, _options.Output + ".mdb");
             using (var peStream = new FileStream(outputFile, FileMode.Create))
             using (var pdbStream = new FileStream(debugFile, FileMode.Create))
             {
-                var r = _compilation.Emit(peStream, pdbStream);
+                var r = _compilation.EmitWithMdb(peStream, pdbStream);
 
                 foreach (var d in r.Diagnostics)
                 {

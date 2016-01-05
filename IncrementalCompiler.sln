@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CompilerPlugin.Unity5", "ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalCompiler", "extra\UniversalCompiler\UniversalCompiler.csproj", "{B19F1DAC-FA9A-4749-9E03-1848D29BFCCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynMdbWriter", "core\RoslynMdbWriter\RoslynMdbWriter.csproj", "{286226F3-564D-480A-B6C2-2D207CBFB064}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{B19F1DAC-FA9A-4749-9E03-1848D29BFCCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B19F1DAC-FA9A-4749-9E03-1848D29BFCCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B19F1DAC-FA9A-4749-9E03-1848D29BFCCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{286226F3-564D-480A-B6C2-2D207CBFB064}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{286226F3-564D-480A-B6C2-2D207CBFB064}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{286226F3-564D-480A-B6C2-2D207CBFB064}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{286226F3-564D-480A-B6C2-2D207CBFB064}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -46,5 +52,6 @@ Global
 		{A848498C-64E7-444F-83FD-FCFE42E79E53} = {A22672B3-D1C4-47C0-AB82-6D22BBB94BBB}
 		{67FE81D8-C1BF-4D15-A512-E9E8078DEECF} = {A22672B3-D1C4-47C0-AB82-6D22BBB94BBB}
 		{B19F1DAC-FA9A-4749-9E03-1848D29BFCCD} = {A22672B3-D1C4-47C0-AB82-6D22BBB94BBB}
+		{286226F3-564D-480A-B6C2-2D207CBFB064} = {092669A2-567F-4C73-A01E-AEBA2C733994}
 	EndGlobalSection
 EndGlobal
