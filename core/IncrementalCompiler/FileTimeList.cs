@@ -11,9 +11,11 @@ namespace IncrementalCompiler
 
         public class Result
         {
-            public IEnumerable<string> Added;
-            public IEnumerable<string> Changed;
-            public IEnumerable<string> Removed;
+            public List<string> Added;
+            public List<string> Changed;
+            public List<string> Removed;
+
+            public bool Empty => Added.Count == 0 && Changed.Count == 0 && Removed.Count == 0;
         }
 
         public Result Update(IEnumerable<string> files)
@@ -30,9 +32,9 @@ namespace IncrementalCompiler
             {
                 return new Result
                 {
-                    Added = Enumerable.Empty<string>(),
-                    Changed = Enumerable.Empty<string>(),
-                    Removed = Enumerable.Empty<string>(),
+                    Added = new List<string>(),
+                    Changed = new List<string>(),
+                    Removed = new List<string>(),
                 };
             }
 

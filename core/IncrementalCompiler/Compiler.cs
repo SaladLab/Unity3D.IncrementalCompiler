@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Mono.CompilerServices.SymbolWriter;
 using NLog;
@@ -19,6 +21,8 @@ namespace IncrementalCompiler
         private FileTimeList _sourceFileList;
         private Dictionary<string, MetadataReference> _referenceMap;
         private Dictionary<string, SyntaxTree> _sourceMap;
+        private MemoryStream _outputDllStream;
+        private MemoryStream _outputDebugSymbolStream;
 
         public CompileResult Build(CompileOptions options)
         {
@@ -127,7 +131,59 @@ namespace IncrementalCompiler
                 _sourceMap.Remove(file);
             }
 
-            Emit(result);
+            // emit or reuse prebuilt output
+
+            var reusePrebuilt = _outputDllStream != null && (
+                (_options.PrebuiltOutputReuse == PrebuiltOutputReuseType.WhenNoChange &&
+                 sourceChanges.Empty && referenceChanges.Empty) ||
+                (_options.PrebuiltOutputReuse == PrebuiltOutputReuseType.WhenNoSourceChange &&
+                 sourceChanges.Empty && referenceChanges.Added.Count == 0 && referenceChanges.Removed.Count == 0));
+
+            if (reusePrebuilt)
+            {
+                _logger.Info("Reuse prebuilt output");
+
+                // write dll
+
+                var dllFile = Path.Combine(_options.WorkDirectory, _options.Output);
+                using (var dllStream = new FileStream(dllFile, FileMode.Create))
+                {
+                    _outputDllStream.Seek(0L, SeekOrigin.Begin);
+                    _outputDllStream.CopyTo(dllStream);
+                }
+
+                // write pdb or mdb
+
+                switch (_options.DebugSymbolFile)
+                {
+                    case DebugSymbolFileType.Pdb:
+                        var pdbFile = Path.Combine(_options.WorkDirectory, Path.ChangeExtension(_options.Output, ".pdb"));
+                        using (var debugSymbolStream = new FileStream(pdbFile, FileMode.Create))
+                        {
+                            _outputDebugSymbolStream.Seek(0L, SeekOrigin.Begin);
+                            _outputDebugSymbolStream.CopyTo(debugSymbolStream);
+                        }
+                        break;
+
+                    case DebugSymbolFileType.PdbToMdb:
+                    case DebugSymbolFileType.Mdb:
+                        var mdbFile = Path.Combine(_options.WorkDirectory, _options.Output + ".mdb");
+                        using (var debugSymbolStream = new FileStream(mdbFile, FileMode.Create))
+                        {
+                            _outputDebugSymbolStream.Seek(0L, SeekOrigin.Begin);
+                            _outputDebugSymbolStream.CopyTo(debugSymbolStream);
+                        }
+                        break;
+                }
+
+                result.Succeeded = true;
+            }
+            else
+            {
+                _logger.Info("Emit");
+
+                Emit(result);
+            }
 
             return result;
         }
@@ -145,30 +201,75 @@ namespace IncrementalCompiler
 
         private void Emit(CompileResult result)
         {
-            var outputFile = Path.Combine(_options.WorkDirectory, _options.Output);
-            var debugFile = Path.Combine(_options.WorkDirectory, _options.Output + ".mdb");
-            using (var peStream = new FileStream(outputFile, FileMode.Create))
-            using (var pdbStream = new FileStream(debugFile, FileMode.Create))
+            _outputDllStream = new MemoryStream();
+            _outputDebugSymbolStream = _options.DebugSymbolFile != DebugSymbolFileType.None ? new MemoryStream() : null;
+
+            // emit to memory
+
+            var r = _options.DebugSymbolFile == DebugSymbolFileType.Mdb ? _compilation.EmitWithMdb(_outputDllStream, _outputDebugSymbolStream) : _compilation.Emit(_outputDllStream, _outputDebugSymbolStream);
+
+            // memory to file
+
+            var dllFile = Path.Combine(_options.WorkDirectory, _options.Output);
+            var mdbFile = Path.Combine(_options.WorkDirectory, _options.Output + ".mdb");
+            var pdbFile = Path.Combine(_options.WorkDirectory, Path.ChangeExtension(_options.Output, ".pdb"));
+
+            var emitDebugSymbolFile = _options.DebugSymbolFile == DebugSymbolFileType.Mdb ? mdbFile : pdbFile;
+
+            using (var dllStream = new FileStream(dllFile, FileMode.Create))
             {
-                var r = _compilation.EmitWithMdb(peStream, pdbStream);
+                _outputDllStream.Seek(0L, SeekOrigin.Begin);
+                _outputDllStream.CopyTo(dllStream);
+            }
 
-                foreach (var d in r.Diagnostics)
+            if (_outputDebugSymbolStream != null)
+            {
+                using (var debugSymbolStream = new FileStream(emitDebugSymbolFile, FileMode.Create))
                 {
-                    if (d.Severity == DiagnosticSeverity.Warning && d.IsWarningAsError == false)
-                        result.Warnings.Add(GetDiagnosticString(d, "warning"));
-                    else if (d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
-                        result.Errors.Add(GetDiagnosticString(d, "error"));
+                    _outputDebugSymbolStream.Seek(0L, SeekOrigin.Begin);
+                    _outputDebugSymbolStream.CopyTo(debugSymbolStream);
                 }
+            }
 
-                result.Succeeded = r.Success;
+            // gather result
+
+            foreach (var d in r.Diagnostics)
+            {
+                if (d.Severity == DiagnosticSeverity.Warning && d.IsWarningAsError == false)
+                    result.Warnings.Add(GetDiagnosticString(d, "warning"));
+                else if (d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
+                    result.Errors.Add(GetDiagnosticString(d, "error"));
+            }
+
+            result.Succeeded = r.Success;
+
+            // pdb to mdb when required
+
+            if (_options.DebugSymbolFile == DebugSymbolFileType.PdbToMdb)
+            {
+                var code = ConvertPdb2Mdb(dllFile);
+                _logger.Info("pdb2mdb exited with {0}", code);
+                File.Delete(pdbFile);
+
+                // read converted mdb file to cache contents
+                _outputDebugSymbolStream = new MemoryStream(File.ReadAllBytes(mdbFile));
             }
         }
 
         private static string GetDiagnosticString(Diagnostic diagnostic, string type)
         {
             var line = diagnostic.Location.GetLineSpan();
-            return $"{line.Path}({line.StartLinePosition.Line + 1},{line.StartLinePosition.Character + 1}): " + 
-                   $"{type} {diagnostic.Id}: {diagnostic.GetMessage()}";
+            return $"{line.Path}({line.StartLinePosition.Line + 1},{line.StartLinePosition.Character + 1}): " + $"{type} {diagnostic.Id}: {diagnostic.GetMessage()}";
+        }
+
+        public static int ConvertPdb2Mdb(string dllFile)
+        {
+            var toolPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "pdb2mdb.exe");
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo(toolPath, '"' + dllFile + '"');
+            process.Start();
+            process.WaitForExit();
+            return process.ExitCode;
         }
     }
 }
