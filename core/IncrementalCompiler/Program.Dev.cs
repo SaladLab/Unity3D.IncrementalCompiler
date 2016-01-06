@@ -19,6 +19,7 @@ namespace IncrementalCompiler
 
             var workDirectory = args[1];
             var reponseFile = args[2];
+            var settings = Settings.Load() ?? Settings.Default;
 
             var logger = LogManager.GetLogger("Dev");
             logger.Info("Started");
@@ -40,6 +41,8 @@ namespace IncrementalCompiler
             options.WorkDirectory = curPath;
             options.References = options.References.Distinct().ToList();
             options.Files = options.Files.Distinct().ToList();
+            options.DebugSymbolFile = settings.DebugSymbolFile;
+            options.PrebuiltOutputReuse = settings.PrebuiltOutputReuse;
 
             var parentProcessId = Process.GetCurrentProcess().Id;
 

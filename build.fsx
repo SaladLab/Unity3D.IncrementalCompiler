@@ -44,6 +44,7 @@ Target "Package" (fun _ ->
         CreateDir compilerDir
         // copy output files
         "./core/IncrementalCompiler/bin/Release/IncrementalCompiler.packed.exe" |> CopyFile (compilerDir @@ "IncrementalCompiler.exe")
+        "./core/IncrementalCompiler/IncrementalCompiler.xml" |> CopyFile compilerDir
         "./extra/CompilerPlugin." + target + "/bin/Release/Unity.PureCSharpTests.dll" |> CopyFile (editorDir @@ "CompilerPlugin.dll")
         "./extra/UniversalCompiler/bin/Release/UniversalCompiler.exe" |> CopyFile compilerDir
         "./tools/pdb2mdb/pdb2mdb.exe" |> CopyFile compilerDir

@@ -5,6 +5,21 @@ using System.Runtime.Serialization;
 
 namespace IncrementalCompiler
 {
+    public enum DebugSymbolFileType
+    {
+        None,
+        Pdb,
+        PdbToMdb,
+        Mdb
+    }
+
+    public enum PrebuiltOutputReuseType
+    {
+        None,
+        WhenNoChange,
+        WhenNoSourceChange
+    }
+
     [DataContract]
     public class CompileOptions
     {
@@ -14,6 +29,8 @@ namespace IncrementalCompiler
         [DataMember] public List<string> Defines = new List<string>();
         [DataMember] public List<string> References = new List<string>();
         [DataMember] public List<string> Files = new List<string>();
+        [DataMember] public DebugSymbolFileType DebugSymbolFile;
+        [DataMember] public PrebuiltOutputReuseType PrebuiltOutputReuse;
 
         public void ParseArgument(string[] args)
         {

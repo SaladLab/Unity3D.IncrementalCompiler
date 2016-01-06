@@ -57,12 +57,25 @@ namespace IncrementalCompiler
             var logger = LogManager.GetLogger("Client");
             logger.Info("Started");
 
+            Settings settings;
+            try
+            {
+                settings = Settings.Load() ?? Settings.Default;
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed in loading settings.");
+                return 1;
+            }
+
             var currentPath = Directory.GetCurrentDirectory();
             var options = new CompileOptions();
             options.ParseArgument(args);
             options.WorkDirectory = currentPath;
             options.References = options.References.Distinct().ToList();
             options.Files = options.Files.Distinct().ToList();
+            options.DebugSymbolFile = settings.DebugSymbolFile;
+            options.PrebuiltOutputReuse = settings.PrebuiltOutputReuse;
 
             logger.Info("CurrentDir: {0}", Directory.GetCurrentDirectory());
             logger.Info("Output: {0}", options.Output);
