@@ -5,7 +5,7 @@ using System.Linq;
 
 internal class Incremental60Compiler : Compiler
 {
-	public override string Name => "Incremental C# Compiler C# 6.0";
+	public override string Name => "Incremental C# Compiler 6.0";
 	public override bool NeedsPdb2MdbConversion => false;
 
 	public Incremental60Compiler(Logger logger, string directory)
