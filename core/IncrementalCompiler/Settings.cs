@@ -1,6 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
-using System.Xml.Serialization;
+using System.Xml.Linq;
 
 namespace IncrementalCompiler
 {
@@ -29,14 +30,13 @@ namespace IncrementalCompiler
 
         public static Settings Load(Stream stream)
         {
-            var deserializer = new XmlSerializer(typeof(Settings));
-            return (Settings)deserializer.Deserialize(stream);
-        }
-
-        public static void Save(Stream stream, Settings settings)
-        {
-            var serializer = new XmlSerializer(typeof(Settings));
-            serializer.Serialize(stream, settings);
+            // To reduce start-up time, do manual parsing instead of using XmlSerializer
+            var xdoc = XDocument.Load(stream).Element("Settings");
+            return new Settings
+            {
+                DebugSymbolFile = (DebugSymbolFileType)Enum.Parse(typeof(DebugSymbolFileType), xdoc.Element("DebugSymbolFile").Value),
+                PrebuiltOutputReuse = (PrebuiltOutputReuseType)Enum.Parse(typeof(PrebuiltOutputReuseType), xdoc.Element("PrebuiltOutputReuse").Value),
+            };
         }
     }
 }
