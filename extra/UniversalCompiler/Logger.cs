@@ -70,7 +70,7 @@ internal class Logger : IDisposable
 
 	public void AppendHeader()
 	{
-		var dateTimeString = DateTime.Now.ToString("F");
+		var dateTimeString = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 		var middleLine = "*" + new string(' ', 78) + "*";
 		int index = (80 - dateTimeString.Length) / 2;
 		middleLine = middleLine.Remove(index, dateTimeString.Length).Insert(index, dateTimeString);
