@@ -1,4 +1,4 @@
 DEL /Q .\Assets\Editor\Dummy\X_*
-DEL /Q .\Assets\Editor\Plugins\X_*
-DEL /Q .\Assets\Editor\Scripts\X_*
+DEL /Q .\Assets\Plugins\Dummy\X_*
+DEL /Q .\Assets\Scripts\Dummy\X_*
 PAUSE.
