@@ -8,6 +8,8 @@ using NLog;
 using NLog.Config;
 using NLog.Targets;
 using System.ServiceModel;
+using NLog.LayoutRenderers;
+using NLog.LayoutRenderers.Wrappers;
 
 namespace IncrementalCompiler
 {
@@ -186,6 +188,7 @@ namespace IncrementalCompiler
 
         static void SetupLogger(string fileName, bool useConsole)
         {
+            InitNLogConfigurationItemFactory();
             var config = new LoggingConfiguration();
 
             if (useConsole)
@@ -208,6 +211,24 @@ namespace IncrementalCompiler
             config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, fileTarget));
 
             LogManager.Configuration = config;
+        }
+
+        static void InitNLogConfigurationItemFactory()
+        {
+            // Default initialization code for ConfigurationItemFactory.Default spends 
+            // almost 0.5 sec in il-packed executable. (it scans whole types in assembly to find plugin types)
+            // To avoid this slow-down, manual initialization is written.
+            // If you need another layout-renderer, filter or anything else in NLog assembly,
+            // please insert register code here.
+
+            var factory = new ConfigurationItemFactory(new Assembly[0]);
+            factory.LayoutRenderers.RegisterDefinition("longdate", typeof(LongDateLayoutRenderer));
+            factory.LayoutRenderers.RegisterDefinition("level", typeof(LevelLayoutRenderer));
+            factory.LayoutRenderers.RegisterDefinition("logger", typeof(LoggerNameLayoutRenderer));
+            factory.LayoutRenderers.RegisterDefinition("message", typeof(MessageLayoutRenderer));
+            factory.LayoutRenderers.RegisterDefinition("exception", typeof(ExceptionLayoutRenderer));
+            factory.LayoutRenderers.RegisterDefinition("uppercase", typeof(UppercaseLayoutRendererWrapper));
+            ConfigurationItemFactory.Default = factory;
         }
     }
 }
