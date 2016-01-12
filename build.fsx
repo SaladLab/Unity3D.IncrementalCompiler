@@ -30,9 +30,13 @@ Target "Build" (fun _ ->
 
 Target "Package" (fun _ ->
     // pack IncrementalCompiler.exe with dependent module dlls to packed one
-    let errorCode = Shell.Exec("./packages/ILRepack/tools/ILRepack.exe",
-                               "/wildcards /out:IncrementalCompiler.packed.exe IncrementalCompiler.exe *.dll",
-                               "./core/IncrementalCompiler/bin/Release")
+    Shell.Exec("./packages/ILRepack/tools/ILRepack.exe",
+               "/wildcards /out:IncrementalCompiler.packed.exe IncrementalCompiler.exe *.dll",
+               "./core/IncrementalCompiler/bin/Release")
+    // fix roslyn compiler to work well with UnityVS
+    Shell.Exec("./core/RoslynCompilerFix/bin/Release/RoslynCompilerFix.exe",
+               "IncrementalCompiler.packed.exe IncrementalCompiler.packed.exe",
+               "./core/IncrementalCompiler/bin/Release")
     // let's make package
     for target in ["Unity4"; "Unity5"] do
         let targetDir = binDir @@ target
