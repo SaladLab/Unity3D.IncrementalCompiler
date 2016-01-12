@@ -24,7 +24,7 @@ sysinfo.txt
 *.unitypackage
 
 # IncrementalCompiler
-/Assets/Editor/CompilerPlugin*
+/Assets/Editor/Compiler*
 /Compiler/
 
 # Generated Code

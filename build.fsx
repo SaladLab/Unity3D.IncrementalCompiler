@@ -45,8 +45,10 @@ Target "Package" (fun _ ->
         // copy output files
         "./core/IncrementalCompiler/bin/Release/IncrementalCompiler.packed.exe" |> CopyFile (compilerDir @@ "IncrementalCompiler.exe")
         "./core/IncrementalCompiler/IncrementalCompiler.xml" |> CopyFile compilerDir
+        "./core/UnityPackage/Assets/Editor/CompilerSettings.cs" |> CopyFile editorDir
         "./extra/CompilerPlugin." + target + "/bin/Release/Unity.PureCSharpTests.dll" |> CopyFile (editorDir @@ "CompilerPlugin.dll")
         "./extra/UniversalCompiler/bin/Release/UniversalCompiler.exe" |> CopyFile compilerDir
+        "./extra/UniversalCompiler/UniversalCompiler.xml" |> CopyFile compilerDir
         "./tools/pdb2mdb/pdb2mdb.exe" |> CopyFile compilerDir
         // create zipped packages
         !! (targetDir @@ "**") |> Zip targetDir (binDir @@ "IncrementalCompiler." + target + ".zip")
