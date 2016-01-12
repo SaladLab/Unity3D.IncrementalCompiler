@@ -15,13 +15,24 @@ internal class Program
 		int exitCode;
 		Logger logger = null;
 
+		Settings settings;
+		try
+		{
+			settings = Settings.Load() ?? Settings.Default;
+		}
+		catch (Exception e)
+		{
+			Console.Error.Write("Failed in loading settings: " + e);
+			return 1;
+		}
+
 #if LOGGING_ENABLED
 		using (logger = new Logger())
 #endif
 		{
 			try
 			{
-				exitCode = Compile(args, logger);
+				exitCode = Compile(args, logger, settings);
 			}
 			catch (Exception e)
 			{
@@ -33,7 +44,7 @@ internal class Program
 		return exitCode;
 	}
 
-	private static int Compile(string[] args, Logger logger)
+	private static int Compile(string[] args, Logger logger, Settings settings)
 	{
 		logger?.AppendHeader();
 
@@ -56,7 +67,7 @@ internal class Program
 			return -1;
 		}
 
-		var compiler = FindSuitableCompiler(logger, CurrentPlatform, projectDir, compilationOptions, unityEditorDataDir);
+		var compiler = CreateCompiler(settings.Compiler, logger, CurrentPlatform, projectDir, compilationOptions, unityEditorDataDir);
 
 		logger?.Append($"Compiler: {compiler.Name}");
 		logger?.Append("");
@@ -92,6 +103,43 @@ internal class Program
 		compiler.PrintPdb2MdbOutputAndErrors();
 
 		return 0;
+	}
+
+	private static Compiler CreateCompiler(CompilerType compilerType, Logger logger, Platform platform, string projectDir, string[] compilationOptions, string unityEditorDataDir)
+	{
+		var compilerDirectory = Path.Combine(projectDir, LANGUAGE_SUPPORT_DIR);
+
+		switch (compilerType)
+		{
+			case CompilerType.Auto:
+				return FindSuitableCompiler(logger, platform, projectDir, compilationOptions, unityEditorDataDir);
+
+			case CompilerType.Mono3:
+				var stockCompilerPath = Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/gmcs.exe");
+				return new Mono30Compiler(logger, stockCompilerPath);
+
+			case CompilerType.Mono5:
+				var bleedingEdgeCompilerPath = Path.Combine(unityEditorDataDir, @"MonoBleedingEdge/lib/mono/4.5/mcs.exe");
+				return new Mono50Compiler(logger, bleedingEdgeCompilerPath);
+
+			case CompilerType.Mono6:
+				if (Mono60Compiler.IsAvailable(compilerDirectory))
+					return new Mono60Compiler(logger, compilerDirectory);
+				break;
+
+			case CompilerType.Microsoft6:
+				var roslynDirectory = Path.Combine(compilerDirectory, "Roslyn");
+				if (Microsoft60Compiler.IsAvailable(roslynDirectory))
+					return new Microsoft60Compiler(logger, roslynDirectory);
+				break;
+
+			case CompilerType.Incremental6:
+				if (Incremental60Compiler.IsAvailable(compilerDirectory))
+					return new Incremental60Compiler(logger, compilerDirectory);
+				break;
+		}
+
+		return null;
 	}
 
 	private static Compiler FindSuitableCompiler(Logger logger, Platform platform, string projectDir, string[] compilationOptions, string unityEditorDataDir)
