@@ -267,6 +267,7 @@ namespace IncrementalCompiler
             var toolPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "pdb2mdb.exe");
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(toolPath, '"' + dllFile + '"');
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.Start();
             process.WaitForExit();
             return process.ExitCode;
