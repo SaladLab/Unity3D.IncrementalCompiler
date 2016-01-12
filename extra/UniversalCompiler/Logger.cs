@@ -23,7 +23,7 @@ internal class Logger : IDisposable
 		*/
 	}
 
-	private const string LOG_FILENAME = "./Temp/UniversalCompiler.txt";
+	private const string LOG_FILENAME = "./Temp/UniversalCompiler.log";
 	private const int MAXIMUM_FILE_AGE_IN_MINUTES = 5;
 
 	private readonly Mutex mutex;
