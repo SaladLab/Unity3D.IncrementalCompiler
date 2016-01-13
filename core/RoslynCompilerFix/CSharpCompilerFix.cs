@@ -137,19 +137,29 @@ namespace RoslynCompilerFix
         {
             // Goal:
             //   Rename <>c__DisplayClass0_0 to <*MethodName*>c__AnonStorey* for lambda class name
-            // How:
-            //   IL_0000: ldarg.0
-            //   >> IL_?: ldstr "<"
-            //   >> IL_?: ldarg.0
-            //   >> IL_?: callvirt instance string Microsoft.CodeAnalysis.CSharp.Symbol::get_Name()
-            //   >> IL_?: ldstr ">c__AnonStorey"
-            //   IL_0001: ldarg.2
-            //   IL_0002: ldarg.3
-            //   IL_0003: ldarg.s closureId
-            //   IL_0005: call string Microsoft.CodeAnalysis.CSharp.LambdaFrame::MakeName(class Microsoft.CodeAnalysis.SyntaxNode, valuetype Microsoft.CodeAnalysis.CodeGen.DebugId, valuetype Microsoft.CodeAnalysis.CodeGen.DebugId)
-            //   >> IL_?: call string [mscorlib]System.String::Concat(string, string, string, string)
-            //   IL_000a: ldarg.1
-            //   IL_000b: call instance void Microsoft.CodeAnalysis.CSharp.Symbols.SynthesizedContainer::.ctor(string, class Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol)
+            //
+            // How for Roslyn:
+            //   Modify constructor of LambdaFrame from
+            //      LambdaFrame(MethodSymbol topLevelMethod, ...)
+            //       : base(MakeName(...
+            //   To
+            //      LambdaFrame(MethodSymbol topLevelMethod, ...)
+            //       : base("<" + topLevelMethod.Name + ">c__AnonStorey" + MakeName(...
+            //
+            // How for IL:
+            //   Insert codes like:
+            //     IL_0000: ldarg.0
+            //     >> IL_?: ldstr "<"
+            //     >> IL_?: ldarg.1
+            //     >> IL_?: callvirt instance string Microsoft.CodeAnalysis.CSharp.Symbol::get_Name()
+            //     >> IL_?: ldstr ">c__AnonStorey"
+            //     IL_0001: ldarg.2
+            //     IL_0002: ldarg.3
+            //     IL_0003: ldarg.s closureId
+            //     IL_0005: call string Microsoft.CodeAnalysis.CSharp.LambdaFrame::MakeName(class Microsoft.CodeAnalysis.SyntaxNode, valuetype Microsoft.CodeAnalysis.CodeGen.DebugId, valuetype Microsoft.CodeAnalysis.CodeGen.DebugId)
+            //     >> IL_?: call string [mscorlib]System.String::Concat(string, string, string, string)
+            //     IL_000a: ldarg.1
+            //     IL_000b: call instance void Microsoft.CodeAnalysis.CSharp.Symbols.SynthesizedContainer::.ctor(string, class Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol)
 
             var il = method.Body.GetILProcessor();
             var baseInst = il.Body.Instructions[1];
@@ -164,7 +174,7 @@ namespace RoslynCompilerFix
             var symbolGetName = method.Module.Import(symbolGetNameMethod);
 
             il.InsertBefore(baseInst, il.Create(OpCodes.Ldstr, "<"));
-            il.InsertBefore(baseInst, il.Create(OpCodes.Ldarg_0));
+            il.InsertBefore(baseInst, il.Create(OpCodes.Ldarg_1));
             il.InsertBefore(baseInst, il.Create(OpCodes.Callvirt, symbolGetName));
             il.InsertBefore(baseInst, il.Create(OpCodes.Ldstr, ">c__AnonStorey"));
 
