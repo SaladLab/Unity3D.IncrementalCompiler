@@ -1,4 +1,4 @@
-## Under the hood
+# Under the hood
 
 IncrementalCompiler for Unity3D was my fun-project for 2016 new year's holiday.
 At that time I was thinking about slow compilation speed of unity3d-mono and
@@ -55,7 +55,7 @@ public static class CSharp60SupportActivator {
     list.Add(new CustomCSharpLanguage());
   }
   private static List<SupportedLanguage> GetSupportedLanguages() {
-    var fieldInfo = typeof(ScriptCompilers).GetField("_supportedLanguages", BindingFlags.NonPublic | BindingFlags.Static);
+    var fieldInfo = typeof(ScriptCompilers).GetField("_supportedLanguages", ...);
     var languages = (List<SupportedLanguage>)fieldInfo.GetValue(null);
     return languages;
   }
@@ -79,8 +79,8 @@ compiler can be written without any hard work.
 // Minimal C# compiler
 Assembly Build(string[] sourcePaths, string[] referencePaths, string[] defines) {
   var assemblyName = Path.GetRandomFileName();
-  var syntaxTrees = sourcePaths.Select(file => CSharpSyntaxTree.ParseText(File.ReadAllText(file), path: file)).ToArray();
-  var references = referencePaths.Select(file => MetadataReference.CreateFromFile(file)).ToArray();
+  var syntaxTrees = sourcePaths.Select(file => CSharpSyntaxTree.ParseText(File.ReadAllText(file)));
+  var references = referencePaths.Select(file => MetadataReference.CreateFromFile(file));
   var compilation = CSharpCompilation.Create(assemblyName, syntaxTrees, references);
   using (var ms = new MemoryStream())
     compilation.Emit(ms);
@@ -175,11 +175,11 @@ MDB file should be constructed and they already provided a tool to convert pdb t
 jbevain update support output of visual studio 2015 [pdb2mdb](https://gist.github.com/jbevain/ba23149da8369e4a966f)
 
 So simple process supporting unity3d is
- - Emit pdb via roslyn
+ - Emit pdb via Roslyn
  - Convert pdb to mdb with pdb2mdb tool
 
-But how about emitting mdb from roslyn directly? it can save time for generating and converting pdb?
-A guy at Xamarain already tried it but it is not updated now. So I grab his work and update it to work latest roslyn.
+But how about emitting mdb from Roslyn directly? it can save time for generating and converting pdb?
+A guy at Xamarain already tried it but it is not updated now. So I grab his work and update it to work latest Roslyn.
 
 ### Renaming symbol for UnityVS debugging
 
@@ -257,11 +257,12 @@ public static bool IsCSharpGenerator(Value thisValue) {
 }
 public override UnityProperty[] VariableProperties() {
   return (from f in base.Type.GetInstanceFields()
-  where !f.Name.StartsWith("<>") && !f.Name.StartsWith("<$")
-  where f.Name.StartsWith("<")
-  where f.Name.Contains(">__")
-  select f into field
-  select base.Field(field, field.Name.Substring(1, field.Name.IndexOf(">__", 1, System.StringComparison.InvariantCulture) - 1))).ToArray<UnityProperty>();
+          where !f.Name.StartsWith("<>") && !f.Name.StartsWith("<$")
+          where f.Name.StartsWith("<")
+          where f.Name.Contains(">__")
+          select f into field
+          select base.Field(field, field.Name.Substring(1, field.Name.IndexOf(">__", 1) - 1))
+         ).ToArray<UnityProperty>();
 }
 ```
 
@@ -281,7 +282,7 @@ second one was chosen.
 
 Check roslyn source related with this naming.
 ```csharp
-internal static string MakeHoistedLocalFieldName(SynthesizedLocalKind kind, int slotIndex, string localNameOpt = null) {
+internal static string MakeHoistedLocalFieldName(SynthesizedLocalKind kind, ...) {
   var result = PooledStringBuilder.GetInstance();
   var builder = result.Builder;
   builder.Append('<');
