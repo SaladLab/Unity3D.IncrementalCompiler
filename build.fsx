@@ -35,7 +35,7 @@ Target "Package" (fun _ ->
                "./core/IncrementalCompiler/bin/Release")
     // fix roslyn compiler to work well with UnityVS
     Shell.Exec("./core/RoslynCompilerFix/bin/Release/RoslynCompilerFix.exe",
-               "IncrementalCompiler.packed.exe IncrementalCompiler.packed.exe",
+               "IncrementalCompiler.packed.exe IncrementalCompiler.packed.fixed.exe",
                "./core/IncrementalCompiler/bin/Release")
     // let's make package
     for target in ["Unity4"; "Unity5"] do
@@ -47,7 +47,7 @@ Target "Package" (fun _ ->
         CreateDir editorDir
         CreateDir compilerDir
         // copy output files
-        "./core/IncrementalCompiler/bin/Release/IncrementalCompiler.packed.exe" |> CopyFile (compilerDir @@ "IncrementalCompiler.exe")
+        "./core/IncrementalCompiler/bin/Release/IncrementalCompiler.packed.fixed.exe" |> CopyFile (compilerDir @@ "IncrementalCompiler.exe")
         "./core/IncrementalCompiler/IncrementalCompiler.xml" |> CopyFile compilerDir
         "./core/UnityPackage/Assets/Editor/CompilerSettings.cs" |> CopyFile editorDir
         "./extra/CompilerPlugin." + target + "/bin/Release/Unity.PureCSharpTests.dll" |> CopyFile (editorDir @@ "CompilerPlugin.dll")
