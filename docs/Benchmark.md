@@ -28,8 +28,8 @@ Benchmark is done with following steps.
 
  1. Unity default compiler (Mono3)
  1. C# 6 roslyn compiler (CSC6)
- 1. Incremental C# 6 Compiler with default configuration (ICS6)
- 1. Incremental C# 6 Compiler with "WhenNoSourceChange" configuration (ICS6@)
+ 1. Incremental C# 6 Compiler with "WhenNoChange" configuration (ICS6)
+ 1. Incremental C# 6 Compiler with default "WhenNoSourceChange" configuration (ICS6@)
 
 ### Results
 
