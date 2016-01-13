@@ -319,3 +319,11 @@ static void Fix_GeneratedNames_MakeHoistedLocalFieldName(MethodDefinition method
   }
 }
 ```
+
+You can find full source for this Roslyn hotfix at
+[CSharpCompilerFix.cs](https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler/blob/master/core/RoslynCompilerFix/CSharpCompilerFix.cs)
+with detailed comments.
+
+## Conclusion
+
+...
