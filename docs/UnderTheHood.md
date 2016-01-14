@@ -81,20 +81,20 @@ Because library users cannot access internal phase in emitting step,
 incremental compiler is written in a simple way like:
 
  - For the first time, it creates compilation object and compiles whole sources with it:
-    ```csharp
-    var syntaxTrees = sourcePaths.Select(file => /* PARSE */);
-    var references = referencePaths.Select(file => /* LOAD */);
-    var compilation = CSharpCompilation.Create(syntaxTrees, references);
-    compilation.Emit(ms);           
-    ```
+```csharp
+var syntaxTrees = sourcePaths.Select(file => /* PARSE */);
+var references = referencePaths.Select(file => /* LOAD */);
+var compilation = CSharpCompilation.Create(syntaxTrees, references);
+compilation.Emit(ms);           
+```
  - For subsequent builds, it update changes to compilation object and compiles it.
-    ```csharp
-    compliation = compliation.RemoveReferences(oldLoadedReferences)
-                            .AddReferences(load(newReference))
-                            .RemoveSyntaxTrees(oldSourceSyntaxTrees)
-                            .AddSyntaxTrees(parse(newSource))
-    compilation.Emit(ms);
-    ```
+```csharp
+compliation = compliation.RemoveReferences(oldLoadedReferences)
+                         .AddReferences(load(newReference))
+                         .RemoveSyntaxTrees(oldSourceSyntaxTrees)
+                         .AddSyntaxTrees(parse(newSource))
+compilation.Emit(ms);
+```
 
 By telling changes in a project to compilation object, rolsyn can use
 pre-parsed syntax trees and some informations that I wish.
