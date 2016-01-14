@@ -220,7 +220,7 @@ you might get MissingMethodException like this:
 MissingMethodException: Method not found: 'NormalTest.Test'.
 ```
 
-When this exception is thrown, just recompiling `Assembly-CSharp-Editor` can solve the problem.
+When this exception is thrown, just recompiling Assembly-CSharp-Editor can solve the problem.
 So this can be a good option for making build fast on the price of rare exception. 
 
 ### MDB instead of PDB
