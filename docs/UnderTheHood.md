@@ -23,7 +23,7 @@ big project into small one. So I decided to make incremental compiler for Unity3
 
 Unity3D makes three projects from Assets directory if your project has only C# sources.
 (If there are .js or .boo sources, additional projects will be created.
- more detailed info: [Unity Manual: Special Folders and Script Compilation Order](http://docs.unity3d.com/Manual/ScriptCompileOrderFolders.html)) 
+ more detailed info: [Unity Manual: Special Folders and Script Compilation Order](http://docs.unity3d.com/Manual/ScriptCompileOrderFolders.html))
 
   - Assembly-CSharp-firstpass
     - Consists of scripts in Plugins directory.
@@ -46,7 +46,7 @@ because they depends on previous projects.
 ### Roslyn
 
 Incremental compiler is built with [Roslyn](https://github.com/dotnet/roslyn)
-which is new open-source project providings C# and Visual Basic compilers. 
+which is new open-source project providings C# and Visual Basic compilers.
 With this project it's really easy to use features that compiler can
 provide like parsing, analysing and even compiling itself.
 
@@ -71,10 +71,10 @@ Not only compiling itself, it can provide new C# 6 and upcoming features.
 
 Roslyn C# compiler does two steps to compile from API view.
 
- 1. Parsing step: 
+ 1. Parsing step:
     It loads sources and build syntax trees by parsing them.
- 2. Emitting step: 
-    From compiler's view, most of work is done here such as semantic analysis, 
+ 2. Emitting step:
+    From compiler's view, most of work is done here such as semantic analysis,
     optimization and code generation.
 
 Because library users cannot access internal phase in emitting step,
@@ -87,7 +87,7 @@ incremental compiler is written in a simple way like:
     var compilation = CSharpCompilation.Create(syntaxTrees, references);
     compilation.Emit(ms);           
     ```
- - For subsequent builds, it update changes to compilation object and compiles it. 
+ - For subsequent builds, it update changes to compilation object and compiles it.
     ```csharp
     compliation = compliation.RemoveReferences(oldLoadedReferences)
                             .AddReferences(load(newReference))
@@ -102,7 +102,7 @@ pre-parsed syntax trees and some informations that I wish.
 ### Compile server
 
 Ok. Keeping compilation object and reusing can make an incremental compiler.
-But where can we put this object on? Everytime Unity3D want to build DLL, 
+But where can we put this object on? Everytime Unity3D want to build DLL,
 it spawns C# compiler.
 C# compiler is running awhile, terminates and leaves built DLL for Unity3D,
 which means it should throw away compilation object.
@@ -129,7 +129,7 @@ to make this tool quickly even Mono doesn't support it.
 
 Compiler server allocates big memory to keep a compilation object.
 In my case, for project consisting of 2,000 sources, it takes 300MB.
- 
+
 ### How to replace a builtin compiler with a new one.
 
 At first, replacing mono compiler in unity directory with new one was considered.
@@ -198,15 +198,15 @@ public static class EditorTest {
   [MenuItem("Assets/Call Test")]
   public static void Test() {
     NormalTest.Test(1);
-  } 
+  }
 }
 ```
- 
+
 After build & run, change the signature of method `Test` called by EditorTest.
 
 ```csharp
 public static class NormalTest {
-  public static void Test(int a, string b) { // "string b" added 
+  public static void Test(int a, string b) { // "string b" added
     Debug.Log("Log:" + a);
   }
 }
@@ -214,21 +214,21 @@ public static class NormalTest {
 
 With WhenNoChange, Assembly-CSharp-Editor will be built because of change of NormalTest.
 But with WhenNoSourceChange, Assembly-CSharp-Editor won't be built because there is no change in their sources and
-you might get MissingMethodException like this: 
+you might get MissingMethodException like this:
 
 ```csharp
 MissingMethodException: Method not found: 'NormalTest.Test'.
 ```
 
 When this exception is thrown, just recompiling Assembly-CSharp-Editor can solve the problem.
-So this can be a good option for making build fast on the price of rare exception. 
+So this can be a good option for making build fast on the price of rare exception.
 
 ### MDB instead of PDB
 
 Roslyn emits PDB file as a debugging symbol. But Unity3D cannot understand PDB file
 because it's based on mono compiler. To make unity3D get proper debugging information,
 MDB file should be constructed.
-Fortunately they already provided a tool to convert pdb to mdb. 
+Fortunately they already provided a tool to convert pdb to mdb.
 Jb Evain also released [new one](https://gist.github.com/jbevain/ba23149da8369e4a966f)
 to support output of visual studio 2015.
 
@@ -236,7 +236,7 @@ So simple process supporting unity3d is
  1. Emit pdb with Roslyn
  1. Convert pdb to mdb with pdb2mdb tool
 
-But how about emitting mdb from Roslyn directly? 
+But how about emitting mdb from Roslyn directly?
 It could save time for generating and converting pdb.
 Good thing is that a guy at Xamarain already tried [it](https://github.com/mono/roslyn/pull/4).
 But bad thing is that it is not being maintained now.
@@ -270,7 +270,7 @@ IEnumerator TestCoroutine(int a, Func<int, string> b) {
 }
 ```
 
-Set breakpoint at a commented line in coroutine and watch local variable `v` in debugging windows. 
+Set breakpoint at a commented line in coroutine and watch local variable `v` in debugging windows.
 UnityVS can show variable `v` in watch window for DLL built from Mono3.
 
 ```csharp
@@ -390,5 +390,6 @@ with detailed comments.
 
 ## Conclusion
 
-Done! During this journey implementing an incremental compiler,
+`Done!` During this journey implementing an incremental compiler,
 I found many interesting works that people has been working and got inspired.
+Also with simple compiler, I became to be able to do iteration faster.
