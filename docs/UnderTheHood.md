@@ -12,7 +12,7 @@ They had "/incremental" option once in old times but lost it already.
 Because C# compiler is really fast and C# language itself is good to
 keep compiler run fast, implementing incremental compilation has not been
 at the first priority.
-Also community keep there project small and like to separate big project into smaller ones
+Also community keep their project small and like to separate big project into smaller ones
 to handle this problem indirectly.
 
 Unity3D uses mono C# infrastructure. It seems hard to make compiler work faster
@@ -99,8 +99,6 @@ incremental compiler is written in a simple way like:
 By telling changes in a project to compilation object, rolsyn can use
 pre-parsed syntax trees and some informations that I wish.
 
-TODO: Check information that roslyn uses for next build 
-
 ### Compile server
 
 Ok. Keeping compilation object and reusing can make an incremental compiler.
@@ -124,8 +122,6 @@ it find a compiler server process. If there is no one, it spawns a compile serve
 Compiler forwards a compilation request to this serdver and waits for results.
 Compile server processes this request, return it to requester and keep
 this intermediate object for subsequent requests.
-
-TODO: Depict process relationship
 
 To communicate between compile client and server,
 [WCF on Named pipe](https://msdn.microsoft.com/en-us/library/ms733769%28v=vs.110%29.aspx) is used
@@ -161,9 +157,10 @@ It is an internal feature for Unity3D and cannot be accessed from external user 
 But to make it, he renamed plugin DLL to one of internal friend DLL names,
 `Unity.PureCSharpTests`.
 
-## Modification for Unity3D/Mono
+## Modification for Unity3D & Mono
 
-TODO: Intro
+After implementing a general incremental compiler, there are some works left to
+go well with Unity3D and Mono.
 
 ### Reuse prebuilt DLLs
 
@@ -172,33 +169,79 @@ But at the same time Unity3D also build Assembly-CSharp-Editor
 because it is dependent on Assembly-CSharp. It's a natural building protocol.
 
 But most of time it is not useful.
-If there is no changed in sources of Assembly-CSharp-Editor, it is considered
+If there is no change in sources of Assembly-CSharp-Editor, it is considered
 relatively safe to skip rebuilding Assembly-CSharp-Editor.
 
-TODO: TEST & SHOW ERROR CASE
-TODO: DETAILED DESCRIPTION OF OPTION
-
-PrebuiltOutputReuse in IncrementalCompiler.xml
+So two options are provided to handle this.
 
 - WhenNoChange :
   When nothing changed in sources and references, reuse prebuilt results.
+  This is safe and common.
 - WhenNoSourceChange :
   When nothing changed in sources and references (except update of some references),
   reuse prebuilt results.
+  This is almost safe and not common. If Assembly-CSharp-Editor is not affected by
+  updated referenced DLL, this will be ok.
+
+But with WhenNoSourceChange, a following case will be errornous.
+
+```csharp
+// Assets/Scripts/NormalTest.cs (will be at Assembly-CSharp)
+public static class NormalTest {
+  public static void Test(int a) {
+    Debug.Log("Log:" + a);
+  }
+}
+
+// Assets/Editor/EditorTest.cs (will be at Assembly-CSharp-Editor)
+public static class EditorTest {
+  [MenuItem("Assets/Call Test")]
+  public static void Test() {
+    NormalTest.Test(1);
+  } 
+}
+```
+ 
+After build & run, change the signature of method `Test` called by EditorTest.
+
+```csharp
+public static class NormalTest {
+  public static void Test(int a, string b) { // "string b" added 
+    Debug.Log("Log:" + a);
+  }
+}
+```
+
+With WhenNoChange, Assembly-CSharp-Editor will be built because of change of NormalTest.
+But with WhenNoSourceChange, Assembly-CSharp-Editor won't be built because there is no change in their sources and
+you might get MissingMethodException like this: 
+
+```csharp
+MissingMethodException: Method not found: 'NormalTest.Test'.
+```
+
+When this exception is thrown, just recompiling `Assembly-CSharp-Editor` can solve the problem.
+So this can be a good option for making build fast on the price of rare exception. 
 
 ### MDB instead of PDB
 
 Roslyn emits PDB file as a debugging symbol. But Unity3D cannot understand PDB file
 because it's based on mono compiler. To make unity3D get proper debugging information,
-MDB file should be constructed and they already provided a tool to convert pdb to mdb and
-jbevain update support output of visual studio 2015 [pdb2mdb](https://gist.github.com/jbevain/ba23149da8369e4a966f)
+MDB file should be constructed.
+Fortunately they already provided a tool to convert pdb to mdb. 
+Jb Evain also released [new one](https://gist.github.com/jbevain/ba23149da8369e4a966f)
+to support output of visual studio 2015.
 
 So simple process supporting unity3d is
- - Emit pdb via Roslyn
- - Convert pdb to mdb with pdb2mdb tool
+ 1. Emit pdb with Roslyn
+ 1. Convert pdb to mdb with pdb2mdb tool
 
-But how about emitting mdb from Roslyn directly? it can save time for generating and converting pdb?
-A guy at Xamarain already tried it but it is not updated now. So I grab his work and update it to work latest Roslyn.
+But how about emitting mdb from Roslyn directly? 
+It could save time for generating and converting pdb.
+Good thing is that a guy at Xamarain already tried [it](https://github.com/mono/roslyn/pull/4).
+But bad thing is that it is not being maintained now.
+So I grab his work and [update it](https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler/blob/master/core/RoslynMdbWriter/README.md)
+to work with latest Roslyn.
 
 ### Renaming symbol for UnityVS debugging
 
@@ -208,13 +251,13 @@ does a lot of hard works to support Unity3D application debugging in Visual Stud
 variable names, source information for IL code and etc but Visual Studio cannot
 understand Mono assembly well enough to support debugging.
 To deal with this problem, UnityVS examines assemblies carefully
-and making use of common pattern of mono DLLs by itself.
+and makes use of common pattern of mono DLLs by itself.
 
 .NET assembly built with Roslyn, however, is different with one with Mono.
 Therefore UnityVS misses some information and cannot give enough debugging
 information to users.
 
-For example,
+For example, let's take look at following coroutine code.
 
 ```csharp
 IEnumerator TestCoroutine(int a, Func<int, string> b) {
@@ -227,7 +270,8 @@ IEnumerator TestCoroutine(int a, Func<int, string> b) {
 }
 ```
 
-UnityVS can show variable v in watch for DLL from Mono3.
+Set breakpoint at a commented line in coroutine and watch local variable `v` in debugging windows. 
+UnityVS can show variable `v` in watch window for DLL built from Mono3.
 
 ```csharp
 this    = "Text01 (Test01)"
@@ -236,7 +280,7 @@ a       = 10
 b       = (trimmed)
 ```
 
-UnityVS cannot show variable v in watch for DLL from Roslyn.
+Howevery, UnityVS cannot show variable v in watch window for DLL built from Roslyn.
 
 ```csharp
 this    = {Test01+<TestCoroutine>d__1}
@@ -245,15 +289,16 @@ a       = 10
 b       = (trimmed)
 ```
 
-There is a difference between Mono and Roslyn for making name of local variables in iterator class.
+This is caused because there is a difference between Mono and Roslyn
+for making name of local variables in iterator class.
 
 ```csharp
 // Mono3
 private sealed class <TestCoroutine>c__Iterator0 : IEnumerator<object>, IEnumerator, IDisposable {
-	internal int a;
-	internal int <v>__0;
-	internal Func<int, string> b;
-	internal Test01 <>f__this;
+  internal int a;
+  internal int <v>__0;
+  internal Func<int, string> b;
+  internal Test01 <>f__this;
   // trimmed
 
 // Roslyn
@@ -345,4 +390,5 @@ with detailed comments.
 
 ## Conclusion
 
-...
+Done! During this journey implementing an incremental compiler,
+I found many interesting works that people has been working and got inspired.
