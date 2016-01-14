@@ -1,6 +1,6 @@
 # Under the hood
 
-IncrementalCompiler for Unity3D was my fun-project for 2016 new year's holiday.
+IncrementalCompiler for Unity3D was my fun-project for new year's holiday 2016.
 At that time I was thinking about slow compilation speed of unity3d-mono and
 wondering if it is possible to make it faster with the minimum effort.
 After a couple of hours digging, it turned out feasible to make it.
@@ -10,7 +10,8 @@ After a couple of hours digging, it turned out feasible to make it.
 Microsoft / Mono C# compiler doesn't support incremental compilation until now.
 They had "/incremental" option once in old times but lost it already.
 Because C# compiler is really fast and C# language itself is good to
-keep compiler run fast, incremental compilation has not been at the first priority.
+keep compiler run fast, implementing incremental compilation has not been
+at the first priority.
 Also community keep there project small and like to separate big project into smaller ones
 to handle this problem indirectly.
 
@@ -21,6 +22,8 @@ big project into small one. So I decided to make incremental compiler for Unity3
 ### Unity build process
 
 Unity3D makes three projects from Assets directory if your project has only C# sources.
+(If there are .js or .boo sources, additional projects will be created.
+ more detailed info: [Unity Manual: Special Folders and Script Compilation Order](http://docs.unity3d.com/Manual/ScriptCompileOrderFolders.html)) 
 
   - Assembly-CSharp-firstpass
     - Consists of scripts in Plugins directory.
@@ -37,12 +40,104 @@ Unity3D makes three projects from Assets directory if your project has only C# s
    - This project is always built not because these sources are modified but by building
      dependent Assembly-CSharp.
 
-[Unity Manual: Special Folders and Script Compilation Order](http://docs.unity3d.com/Manual/ScriptCompileOrderFolders.html)
+These projects will be built successively and Unity3d cannot build these concurrently
+because they depends on previous projects.
 
+### Roslyn
+
+Incremental compiler is built with [Roslyn](https://github.com/dotnet/roslyn)
+which is new open-source project providings C# and Visual Basic compilers. 
+With this project it's really easy to use features that compiler can
+provide like parsing, analysing and even compiling itself.
+
+Just with [Microsoft.CodeAnalysis.CSharp](https://www.nuget.org/packages/Microsoft.CodeAnalysis/),
+compiler can be written without any hard work.
+
+```csharp
+// Minimal C# compiler
+Assembly Build(string[] sourcePaths, string[] referencePaths, string[] defines) {
+  var assemblyName = Path.GetRandomFileName();
+  var syntaxTrees = sourcePaths.Select(file => CSharpSyntaxTree.ParseText(File.ReadAllText(file)));
+  var references = referencePaths.Select(file => MetadataReference.CreateFromFile(file));
+  var compilation = CSharpCompilation.Create(assemblyName, syntaxTrees, references);
+  using (var ms = new MemoryStream())
+    compilation.Emit(ms);
+}
+```
+
+Not only compiling itself, it can provide new C# 6 and upcoming features.
+
+### Incremental compiler
+
+Roslyn C# compiler does two steps to compile from API view.
+
+ 1. Parsing step: 
+    It loads sources and build syntax trees by parsing them.
+ 2. Emitting step: 
+    From compiler's view, most of work is done here such as semantic analysis, 
+    optimization and code generation.
+
+Because library users cannot access internal phase in emitting step,
+incremental compiler is written in a simple way like:
+
+ - For the first time, it creates compilation object and compiles whole sources with it:
+    ```csharp
+    var syntaxTrees = sourcePaths.Select(file => /* PARSE */);
+    var references = referencePaths.Select(file => /* LOAD */);
+    var compilation = CSharpCompilation.Create(syntaxTrees, references);
+    compilation.Emit(ms);           
+    ```
+ - For subsequent builds, it update changes to compilation object and compiles it. 
+    ```csharp
+    compliation = compliation.RemoveReferences(oldLoadedReferences)
+                            .AddReferences(load(newReference))
+                            .RemoveSyntaxTrees(oldSourceSyntaxTrees)
+                            .AddSyntaxTrees(parse(newSource))
+    compilation.Emit(ms);
+    ```
+
+By telling changes in a project to compilation object, rolsyn can use
+pre-parsed syntax trees and some informations that I wish.
+
+TODO: Check information that roslyn uses for next build 
+
+### Compile server
+
+Ok. Keeping compilation object and reusing can make an incremental compiler.
+But where can we put this object on? Everytime Unity3D want to build DLL, 
+it spawns C# compiler.
+C# compiler is running awhile, terminates and leaves built DLL for Unity3D,
+which means it should throw away compilation object.
+
+We have two options to keep this object permanent to reuse:
+
+ 1. Save all information to disc and load them at next invocation.
+ 1. Make a compiler server. Let it alive while Unity3D is alive and
+    every compile invocation will be forwared to it.
+
+Because first one involves an IO intensive process which make work slow
+and I don't know how to (de)serialize a compilation object of Roslyn,
+second one was chosen.
+
+When incremental compiler is requested to compile assembly,
+it find a compiler server process. If there is no one, it spawns a compile server.
+Compiler forwards a compilation request to this serdver and waits for results.
+Compile server processes this request, return it to requester and keep
+this intermediate object for subsequent requests.
+
+TODO: Depict process relationship
+
+To communicate between compile client and server,
+[WCF on Named pipe](https://msdn.microsoft.com/en-us/library/ms733769%28v=vs.110%29.aspx) is used
+to make this tool quickly even Mono doesn't support it.
+
+Compiler server allocates big memory to keep a compilation object.
+In my case, for project consisting of 2,000 sources, it takes 300MB.
+ 
 ### How to replace a builtin compiler with a new one.
 
-At first, Replacing mono compiler in unity directory with new one was considered.
-But it is not an easy way for users and also intrusive way to affect whole projects.
+At first, replacing mono compiler in unity directory with new one was considered.
+But it is not an easy way for users and also intrusive way that affects whole projects.
 However [alexzzzz](https://bitbucket.org/alexzzzz/unity-c-5.0-and-6.0-integration/src)
 found a smart way to workaround this as following:
 
@@ -62,89 +157,13 @@ public static class CSharp60SupportActivator {
 }
 ```
 
-It is an internal feature for Unity3D and cannot be accessed from external DLLs.
+It is an internal feature for Unity3D and cannot be accessed from external user DLLs.
 But to make it, he renamed plugin DLL to one of internal friend DLL names,
 `Unity.PureCSharpTests`.
 
-### Roslyn
-
-[Roslyn](https://github.com/dotnet/roslyn) is new open-source project providings
-C# and Visual Basic compilers. With this project it's really easy to use features
-that compiler can provide like parsing, analysing and even compiling itself.
-
-Just with [Microsoft.CodeAnalysis.CSharp](https://www.nuget.org/packages/Microsoft.CodeAnalysis/),
-compiler can be written without any hard work.
-
-```csharp
-// Minimal C# compiler
-Assembly Build(string[] sourcePaths, string[] referencePaths, string[] defines) {
-  var assemblyName = Path.GetRandomFileName();
-  var syntaxTrees = sourcePaths.Select(file => CSharpSyntaxTree.ParseText(File.ReadAllText(file)));
-  var references = referencePaths.Select(file => MetadataReference.CreateFromFile(file));
-  var compilation = CSharpCompilation.Create(assemblyName, syntaxTrees, references);
-  using (var ms = new MemoryStream())
-    compilation.Emit(ms);
-}
-```
-
-### Incremental compiler
-
-Roslyn C# compiler does two steps to compile from API view.
-First one is parsing step. It loads sources and parse it.
-Second one is emitting step. From compiler's view, most of work is done here
-such as semantic analysis, optimization and code generation.
-Because library users cannot access internal phase in emitting step,
-incremental compiler is written in a simple way like:
-
-Full compilation for first time build.
-```csharp
-var syntaxTrees = sourcePaths.Select(file => /* PARSE */);
-var references = referencePaths.Select(file => /* LOAD */);
-var compilation = CSharpCompilation.Create(syntaxTrees, references);
-compilation.Emit(ms);           
-```
-
-Incremental compilation for subsequent builds.
-```csharp
-compliation = compliation.RemoveReferences(oldLoadedReferences)
-                         .AddReferences(load(newReference))
-                         .RemoveSyntaxTrees(oldSourceSyntaxTrees)
-                         .AddSyntaxTrees(parse(newSource))
-compilation.Emit(ms);
-```
-
-By telling changes in a project to compilation object, rolsyn can use
-pre-parsed syntax trees and some informations that I wish.
-
-### Compile server
-
-Ok. Keeping compilation object and reusing can make an incremental compiler.
-But where can we put this object on? Everytime Unity3D want to build DLL, it
-invokes C# compiler.
-C# compiler is running awhile, exits and leaves built DLL for Unity3D, which means
-it should throw away compilation object.
-
-We have two options to keep this object permanent:
-
- 1. Save all information to disc and load them at next invocation.
- 1. Make a compiler server. Let it alive while Unity3D is alive and
-    every compile invocation will be forwared to it.
-
-Because first one involves an IO intensive process which make work slow
-and I don't know how to (de)serialize a compilation object of Roslyn,
-second one is chosen.
-
-When incremental compiler is requested to compile assembly,
-it find a compiler server process. If there is no one, it spawns a compile server.
-Compiler forwards a compilation request to this server and waits for results.
-Compile server processes this request, return it to requester and keep
-this intermediate object for subsequent requests.
-
-To communicate between compile client and server,
-[WCF on Named pipe](https://msdn.microsoft.com/en-us/library/ms733769%28v=vs.110%29.aspx) is used
-to make this tool quickly even Mono doesn't support it.
-
 ## Modification for Unity3D/Mono
+
+TODO: Intro
 
 ### Reuse prebuilt DLLs
 
