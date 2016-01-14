@@ -195,8 +195,9 @@ namespace IncrementalCompiler
 
         private SyntaxTree ParseSource(string file, CSharpParseOptions parseOption)
         {
-            var text = File.ReadAllText(Path.Combine(_options.WorkDirectory, file));
-            return CSharpSyntaxTree.ParseText(text, parseOption, file, Encoding.UTF8);
+            var fileFullPath = Path.Combine(_options.WorkDirectory, file);
+            var text = File.ReadAllText(fileFullPath);
+            return CSharpSyntaxTree.ParseText(text, parseOption, fileFullPath, Encoding.UTF8);
         }
 
         private void Emit(CompileResult result)
@@ -206,7 +207,9 @@ namespace IncrementalCompiler
 
             // emit to memory
 
-            var r = _options.DebugSymbolFile == DebugSymbolFileType.Mdb ? _compilation.EmitWithMdb(_outputDllStream, _outputDebugSymbolStream) : _compilation.Emit(_outputDllStream, _outputDebugSymbolStream);
+            var r = _options.DebugSymbolFile == DebugSymbolFileType.Mdb
+                ? _compilation.EmitWithMdb(_outputDllStream, _outputDebugSymbolStream)
+                : _compilation.Emit(_outputDllStream, _outputDebugSymbolStream);
 
             // memory to file
 
