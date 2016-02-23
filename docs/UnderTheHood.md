@@ -21,13 +21,17 @@ big project into small one. So I decided to make incremental compiler for Unity3
 
 ### Unity build process
 
-Unity3D makes three projects from Assets directory if your project has only C# sources.
+Unity3D makes at most four projects from Assets directory if your project has only C# sources.
 (If there are .js or .boo sources, additional projects will be created.
  more detailed info: [Unity Manual: Special Folders and Script Compilation Order](http://docs.unity3d.com/Manual/ScriptCompileOrderFolders.html))
 
   - Assembly-CSharp-firstpass
     - Consists of scripts in Plugins directory.
     - No dependency.
+    - It's rare to build this project because these sources are not modified.
+  - Assembly-CSharp-Editor-firstpass
+    - Consists of scripts in Plugins/Editor directory.
+    - Depends on Assembly-CSharp-firstpass.
     - It's rare to build this project because these sources are not modified.
   - Assembly-CSharp
     - Consists of almost sources in Assets.
@@ -36,12 +40,14 @@ Unity3D makes three projects from Assets directory if your project has only C# s
     - This project is always built because these sources are main place for common work.
   - Assembly-CSharp-Editor
    - Consists of scripts in Editor directory.
-   - Depends on Assembly-CSharp
+   - Depends on every other projects.
    - This project is always built not because these sources are modified but by building
      dependent Assembly-CSharp.
 
 These projects will be built successively and Unity3d cannot build these concurrently
 because they depends on previous projects.
+(but Assembly-CSharp and Assembly-CSharp-Editor-firstpass are built at the same time
+ because there is no dependency between them.)
 
 ### Roslyn
 
