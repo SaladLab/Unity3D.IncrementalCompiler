@@ -12,15 +12,16 @@ def GenerateSources(path, name, count):
             f.write(src)
 
 
-def main(editor_count, plugins_count, scripts_count):
+def main(editor_count, plugins_count, plugins_editor_count, scripts_count):
     GenerateSources(r'./Assets/Editor/Dummy', 'EditorDummy', editor_count)
     GenerateSources(r'./Assets/Plugins/Dummy', 'PluginsDummy', plugins_count)
+    GenerateSources(r'./Assets/Plugins/Editor/Dummy', 'PluginsEditorDummy', plugins_editor_count)
     GenerateSources(r'./Assets/Scripts/Dummy', 'ScriptsDummy', scripts_count)
 
 
-if len(sys.argv) != 4:
+if len(sys.argv) != 5:
     print "[Usage]",
-    print os.path.split(sys.argv[0])[1], "editor_count plugins_count scripts_count"
+    print os.path.split(sys.argv[0])[1], "editor_count plugins_count plugins_editor_count scripts_count"
 else:
     counts = [int(v) for v in sys.argv[1:]]
     main(*counts)    
