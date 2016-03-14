@@ -48,6 +48,9 @@
     <Compile Include="..\CompilerPlugin\CSharp60SupportActivator.cs">
       <Link>CSharp60SupportActivator.cs</Link>
     </Compile>
+    <Compile Include="..\CompilerPlugin\CSharpProjectProcessor.cs">
+      <Link>CSharpProjectProcessor.cs</Link>
+    </Compile>
     <Compile Include="..\CompilerPlugin\CustomCSharpCompiler.cs">
       <Link>CustomCSharpCompiler.cs</Link>
     </Compile>
