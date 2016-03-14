@@ -39,7 +39,7 @@ namespace IncrementalCompiler
         static void ShowUsage()
         {
             Console.WriteLine("Unity3D Incremental C# Compiler using Roslyn");
-            Console.WriteLine("https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler/");
+            Console.WriteLine("https://github.com/SaladLab/Unity3D.IncrementalCompiler/");
             Console.WriteLine("");
             Console.WriteLine("* Client");
             Console.WriteLine("  -out:<file>        Specifies the output file name.");

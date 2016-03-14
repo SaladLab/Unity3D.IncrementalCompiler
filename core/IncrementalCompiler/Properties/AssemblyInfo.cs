@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Unity3D.IncrementalCompiler")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Saladbowl Creative")]
+[assembly: AssemblyCompany("SaladLab")]
 [assembly: AssemblyProduct("Unity3D.IncrementalCompiler")]
-[assembly: AssemblyCopyright("Copyright © Saladbowl Creative 2016")]
+[assembly: AssemblyCopyright("Copyright © 2016 SaladLab")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 

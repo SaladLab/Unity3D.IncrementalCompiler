@@ -5,7 +5,7 @@ using System.ServiceModel;
 
 namespace IncrementalCompiler
 {
-    [ServiceContract(Namespace = "https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler")]
+    [ServiceContract(Namespace = "https://github.com/SaladLab/Unity3D.IncrementalCompiler")]
     public interface ICompilerService
     {
         [OperationContract]
