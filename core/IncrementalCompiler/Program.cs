@@ -187,7 +187,7 @@ namespace IncrementalCompiler
         }
 
         static void SetupLogger(string fileName, bool useConsole)
-        {
+        { 
             InitNLogConfigurationItemFactory();
             var config = new LoggingConfiguration();
 
@@ -195,7 +195,7 @@ namespace IncrementalCompiler
             {
                 var consoleTarget = new ColoredConsoleTarget
                 {
-                    Layout = @"${date}|${logger}|${message}|${exception:format=tostring}"
+                    Layout = @"${time}|${logger}|${message}|${exception:format=tostring}"
                 };
                 config.AddTarget("console", consoleTarget);
                 config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, consoleTarget));
@@ -222,6 +222,7 @@ namespace IncrementalCompiler
             // please insert register code here.
 
             var factory = new ConfigurationItemFactory(new Assembly[0]);
+            factory.LayoutRenderers.RegisterDefinition("time", typeof(TimeLayoutRenderer));
             factory.LayoutRenderers.RegisterDefinition("longdate", typeof(LongDateLayoutRenderer));
             factory.LayoutRenderers.RegisterDefinition("level", typeof(LevelLayoutRenderer));
             factory.LayoutRenderers.RegisterDefinition("logger", typeof(LoggerNameLayoutRenderer));
