@@ -49,7 +49,7 @@ Also you can manually modify a configure file which is located at project/Compil
 - [Benchmark](./docs/Benchmark.md)
 - [Under the hood](./docs/UnderTheHood.md)
 
-### Faq
+### FAQ
 
 - When incremental compiler is installed, Unity claims something wrong like:
 ```
