@@ -14,6 +14,8 @@ And still now it can support only windows platform.
 
 Unzip [a release zip file](https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler/releases)
 to your unity project top-most directory.
+(Unblocking zip file before decompressing zip file might be required to
+avoid TypeLoadException of Unity-Mono.)
 
 - When Unity 4.x, use IncrementalCompiler.Unity4.zip
 - When Unity 5.x, use IncrementalCompiler.Unity5.zip
@@ -46,6 +48,16 @@ Also you can manually modify a configure file which is located at project/Compil
 
 - [Benchmark](./docs/Benchmark.md)
 - [Under the hood](./docs/UnderTheHood.md)
+
+### Faq
+
+- When incremental compiler is installed, Unity claims something wrong like:
+```
+TypeLoadException: Could not load type 'UnityEditor.Modules.CSharpCompiler' from assembly 'UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null'.
+UnityEditor.Scripting.ScriptCompilers.CreateCompilerInstance (MonoIsland island, Boolean buildingForEditor, BuildTarget targetPlatform, Boolean runUpdater) (at C:/buildslave/unity/build/Editor/Mono/Scripting/ScriptCompilers.cs:93)
+```
+  This problem is usually caused by windows file blocking system.
+  You need to unblock zip file before uncompressing this file.
 
 ### Related works
 
