@@ -12,7 +12,7 @@ namespace Mono.CompilerServices.SymbolWriter
 	class MdbWriter : ISymUnmanagedWriter5, IPdbWriter
 	{
 		MonoSymbolWriter msw;
-		int nextLocalIndex;
+		// int nextLocalIndex;
 
 		Dictionary<string,SymbolDocumentWriterImpl> documents = new Dictionary<string, SymbolDocumentWriterImpl> ();
 
@@ -48,7 +48,7 @@ namespace Mono.CompilerServices.SymbolWriter
 
 		public void CloseMethod ()
 		{
-			nextLocalIndex = 0;
+			// nextLocalIndex = 0;
 			msw.CloseMethod ();
 		}
 
@@ -136,7 +136,8 @@ namespace Mono.CompilerServices.SymbolWriter
 
 		public void DefineLocalVariable2 (string name, uint attributes, uint sigToken, uint addrKind, uint addr1, uint addr2, uint addr3, uint startOffset, uint endOffset)
 		{
-			msw.DefineLocalVariable (nextLocalIndex++, name);
+			// msw.DefineLocalVariable (nextLocalIndex++, name);
+			msw.DefineLocalVariable ((int)addr1, name);
 		}
 
 		#endregion

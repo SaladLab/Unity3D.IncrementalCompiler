@@ -18,3 +18,5 @@ for handling changes of Roslyn.
   - MetadataWriter.guidIndex -> MetadataWriter.heaps.\_guids
 - Implment dummy MdbWriter.GetDebugInfo instead of returning nothing.
 - Make MdbWriter implement IPdbWriter.
+- MdbWriter.DefineLocalVariable2 uses addr1 as a local variable index rather than
+  counting index with nextLocalIndex.
