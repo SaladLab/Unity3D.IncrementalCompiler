@@ -29,6 +29,7 @@ namespace IncrementalCompiler
         [DataMember] public List<string> Defines = new List<string>();
         [DataMember] public List<string> References = new List<string>();
         [DataMember] public List<string> Files = new List<string>();
+        [DataMember] public List<string> NoWarnings = new List<string>();
         [DataMember] public DebugSymbolFileType DebugSymbolFile;
         [DataMember] public PrebuiltOutputReuseType PrebuiltOutputReuse;
 
@@ -67,6 +68,17 @@ namespace IncrementalCompiler
                         case "out":
                             Output = value.Trim('"');
                             AssemblyName = Path.GetFileNameWithoutExtension(value);
+                            break;
+
+                        case "nowarn":
+                            foreach (var id in value.Split(new char[] {',', ';', ' '},
+                                                           StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                int num;
+                                NoWarnings.Add(int.TryParse(id, out num)
+                                    ? string.Format("CS{0:0000}", num)
+                                    : id);
+                            }
                             break;
                     }
                 }

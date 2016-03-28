@@ -30,6 +30,7 @@ namespace IncrementalCompiler
                 _options.WorkDirectory != options.WorkDirectory ||
                 _options.AssemblyName != options.AssemblyName ||
                 _options.Output != options.Output ||
+                _options.NoWarnings.SequenceEqual(options.NoWarnings) == false ||
                 _options.Defines.SequenceEqual(options.Defines) == false)
             {
                 return BuildFull(options);
@@ -62,11 +63,13 @@ namespace IncrementalCompiler
                 file => file,
                 file => ParseSource(file, parseOption));
 
+            var specificDiagnosticOptions = options.NoWarnings.ToDictionary(x => x, _ => ReportDiagnostic.Suppress);
             _compilation = CSharpCompilation.Create(
                 options.AssemblyName,
                 _sourceMap.Values,
                 _referenceMap.Values,
-                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                    .WithSpecificDiagnosticOptions(specificDiagnosticOptions));
 
             Emit(result);
 
