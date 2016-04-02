@@ -34,6 +34,16 @@ namespace Mono.CompilerServices.SymbolWriter
 			msw.OpenMethod (null, 0, sm);
 		}
 
+		public void OpenMethod2(uint methodToken, int sectionIndex, int offsetRelativeOffset)
+		{
+			OpenMethod(methodToken);
+		}
+
+		public void Commit()
+		{
+			throw new NotImplementedException();
+		}
+
 		public ISymUnmanagedDocumentWriter DefineDocument (string url, ref Guid language, ref Guid languageVendor, ref Guid documentType)
 		{
 			SymbolDocumentWriterImpl doc;
@@ -120,6 +130,11 @@ namespace Mono.CompilerServices.SymbolWriter
 			// };
 
 			dataCountPtr = 4 + 16 + 4 + 1;
+		}
+
+		public void GetDebugInfoWithPadding(ref ImageDebugDirectory debugDirectory, uint dataCount, out uint dataCountPtr, IntPtr data)
+		{
+			GetDebugInfo(ref debugDirectory, dataCount, out dataCountPtr, data);
 		}
 
 		public void DefineSequencePoints (ISymUnmanagedDocumentWriter document, uint count, uint[] offsets, uint[] lines, uint[] columns, uint[] endLines, uint[] endColumns)
