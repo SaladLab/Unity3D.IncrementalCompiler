@@ -1,42 +1,32 @@
 ﻿#I @"packages/FAKE/tools"
+#I @"packages/FAKE.BuildLib/lib/net451"
 #r "FakeLib.dll"
+#r "BuildLib.dll"
 
 open Fake
-open Fake.FileHelper
-open Fake.ProcessHelper
-open Fake.ZipHelper
+open BuildLib
 
-// ------------------------------------------------------------------------------ Project
+let solution = 
+    initSolution
+        "./IncrementalCompiler.sln" "Release" 
+        [ ]
 
-let buildSolutionFile = "./IncrementalCompiler.sln"
-let buildConfiguration = "Release"
-  
-// ---------------------------------------------------------------------------- Variables
+Target "Clean" <| fun _ -> cleanBin
 
-let binDir = "bin"
-let testDir = binDir @@ "test"
+Target "Restore" <| fun _ -> restoreNugetPackages solution
 
-// ------------------------------------------------------------------------------ Targets
+Target "Build" <| fun _ -> buildSolution solution
 
-Target "Clean" (fun _ -> 
-    CleanDirs [binDir]
-)
-
-Target "Build" (fun _ ->
-    !! buildSolutionFile
-    |> MSBuild "" "Rebuild" [ "Configuration", buildConfiguration ]
-    |> Log "Build-Output: "
-)
-
-Target "Package" (fun _ ->
+Target "Package" (fun _ -> 
     // pack IncrementalCompiler.exe with dependent module dlls to packed one
-    Shell.Exec("./packages/ILRepack/tools/ILRepack.exe",
+    let ilrepackExe = (getNugetPackage "ILRepack" "2.0.9") @@ "tools" @@ "ILRepack.exe"
+    Shell.Exec(ilrepackExe,
                "/wildcards /out:IncrementalCompiler.packed.exe IncrementalCompiler.exe *.dll",
-               "./core/IncrementalCompiler/bin/Release")
+               "./core/IncrementalCompiler/bin/Release") |> ignore
     // fix roslyn compiler to work well with UnityVS
     Shell.Exec("./core/RoslynCompilerFix/bin/Release/RoslynCompilerFix.exe",
                "IncrementalCompiler.packed.exe IncrementalCompiler.packed.fixed.exe",
-               "./core/IncrementalCompiler/bin/Release")
+               "./core/IncrementalCompiler/bin/Release") |> ignore
     // let's make package
     for target in ["Unity4"; "Unity5"] do
         let targetDir = binDir @@ target
@@ -58,21 +48,13 @@ Target "Package" (fun _ ->
         !! (targetDir @@ "**") |> Zip targetDir (binDir @@ "IncrementalCompiler." + target + ".zip")
 )
 
-Target "Help" (fun _ ->  
-    List.iter printfn [
-      "usage:"
-      "build [target]"
-      ""
-      " Targets for building:"
-      " * Build        Build"
-      " * Package      Make packages"
-      ""]
-)
+Target "Help" <| fun _ -> 
+    showUsage solution (fun name -> 
+        if name = "package" then Some("Build package", "")
+        else None)
 
-// --------------------------------------------------------------------------- Dependency
-
-// Build order
 "Clean"
+  ==> "Restore"
   ==> "Build"
   ==> "Package"
 
