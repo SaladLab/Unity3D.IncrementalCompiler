@@ -71,7 +71,7 @@ namespace IncrementalCompiler
                             break;
 
                         case "nowarn":
-                            foreach (var id in value.Split(new char[] {',', ';', ' '},
+                            foreach (var id in value.Split(new char[] { ',', ';', ' ' },
                                                            StringSplitOptions.RemoveEmptyEntries))
                             {
                                 int num;

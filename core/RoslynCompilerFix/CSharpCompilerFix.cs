@@ -1,12 +1,12 @@
-﻿using Mono.Cecil;
-using Mono.Cecil.Cil;
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace RoslynCompilerFix
 {
-    class CSharpCompilerFix
+    internal class CSharpCompilerFix
     {
         public static void Process(AssemblyDefinition assemblyDef)
         {
@@ -27,7 +27,7 @@ namespace RoslynCompilerFix
                             Fix_GeneratedNames_MakeLambdaMethodName(method);
                     }
                 }
-                
+
                 var lambdaFrame = module.GetType("Microsoft.CodeAnalysis.CSharp.LambdaFrame");
                 if (lambdaFrame != null)
                 {
@@ -40,7 +40,7 @@ namespace RoslynCompilerFix
             }
         }
 
-        static void Fix_GeneratedNames_MakeHoistedLocalFieldName(MethodDefinition method)
+        private static void Fix_GeneratedNames_MakeHoistedLocalFieldName(MethodDefinition method)
         {
             // Goal:
             //   Rename <v>4__1 to <v>__1 for local variables in iterator
@@ -69,7 +69,7 @@ namespace RoslynCompilerFix
             }
         }
 
-        static void Fix_GeneratedNames_MakeMethodScopedSynthesizedName(MethodDefinition method)
+        private static void Fix_GeneratedNames_MakeMethodScopedSynthesizedName(MethodDefinition method)
         {
             // Goal:
             //   Rename <TestCoroutine>d__1 to <TestCoroutine>c__Iterator0 for iterator class name
@@ -81,7 +81,7 @@ namespace RoslynCompilerFix
             //     >> if (kind == GeneratedNameKind.StateMachineType) {
             //     >>   builder.Append("__Iterator")
             //     >> }
-            // 
+            //
             // How for IL:
             //   IL_0033: ldloc.0
             //   IL_0034: ldc.i4.s 62
@@ -124,7 +124,7 @@ namespace RoslynCompilerFix
             }
         }
 
-        static void Fix_GeneratedNames_ThisProxyFieldName(MethodDefinition method)
+        private static void Fix_GeneratedNames_ThisProxyFieldName(MethodDefinition method)
         {
             // Goal:
             //   Rename <>4__this to <>f__this for this in iterator class
@@ -152,7 +152,7 @@ namespace RoslynCompilerFix
             }
         }
 
-        static void Fix_LambdaFrame_Constructor(MethodDefinition method)
+        private static void Fix_LambdaFrame_Constructor(MethodDefinition method)
         {
             // Goal:
             //   Rename <>c__DisplayClass0_0 to <*MethodName*>c__AnonStorey* for lambda class name
@@ -202,7 +202,7 @@ namespace RoslynCompilerFix
             il.InsertAfter(baseInst2, il.Create(OpCodes.Call, concat4));
         }
 
-        static void Fix_GeneratedNames_MakeLambdaMethodName(MethodDefinition method)
+        private static void Fix_GeneratedNames_MakeLambdaMethodName(MethodDefinition method)
         {
             // Goal:
             //   Rename <Start>b__0 to <>m__<Start>b__0 for method name in lambda class
@@ -210,7 +210,7 @@ namespace RoslynCompilerFix
             // How for Roslyn:
             //   Modify return statement of GeneratedNames.MakeLambdaMethodName from
             //     return MakeMethodScopedSynthesizedName(GeneratedNameKind.LambdaMethod, ...
-            //   to 
+            //   to
             //     return "<>m__" + MakeMethodScopedSynthesizedName(GeneratedNameKind.LambdaMethod, ...
             //
             // How for IL:

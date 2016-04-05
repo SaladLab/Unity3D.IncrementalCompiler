@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.ServiceModel;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
-using System.ServiceModel;
 using NLog.LayoutRenderers;
 using NLog.LayoutRenderers.Wrappers;
 
@@ -15,7 +15,7 @@ namespace IncrementalCompiler
 {
     partial class Program
     {
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             if (args.Length > 0 && args[0] == "-dev")
             {
@@ -36,7 +36,7 @@ namespace IncrementalCompiler
             }
         }
 
-        static void ShowUsage()
+        private static void ShowUsage()
         {
             Console.WriteLine("Unity3D Incremental C# Compiler using Roslyn");
             Console.WriteLine("https://github.com/SaladLab/Unity3D.IncrementalCompiler/");
@@ -52,7 +52,7 @@ namespace IncrementalCompiler
             Console.WriteLine("");
         }
 
-        static int RunAsClient(string[] args)
+        private static int RunAsClient(string[] args)
         {
             SetupLogger("IncrementalCompiler.log", false);
 
@@ -169,7 +169,7 @@ namespace IncrementalCompiler
             }
         }
 
-        static int RunAsServer(string[] args)
+        private static int RunAsServer(string[] args)
         {
             SetupLogger("IncrementalCompiler-Server.log", false);
 
@@ -186,8 +186,8 @@ namespace IncrementalCompiler
             return CompilerServiceServer.Run(logger, parentProcessId);
         }
 
-        static void SetupLogger(string fileName, bool useConsole)
-        { 
+        private static void SetupLogger(string fileName, bool useConsole)
+        {
             InitNLogConfigurationItemFactory();
             var config = new LoggingConfiguration();
 
@@ -213,9 +213,9 @@ namespace IncrementalCompiler
             LogManager.Configuration = config;
         }
 
-        static void InitNLogConfigurationItemFactory()
+        private static void InitNLogConfigurationItemFactory()
         {
-            // Default initialization code for ConfigurationItemFactory.Default spends 
+            // Default initialization code for ConfigurationItemFactory.Default spends
             // almost 0.5 sec in il-packed executable. (it scans whole types in assembly to find plugin types)
             // To avoid this slow-down, manual initialization is written.
             // If you need another layout-renderer, filter or anything else in NLog assembly,

@@ -1,12 +1,12 @@
-﻿using Mono.Cecil;
-using System;
+﻿using System;
 using System.IO;
+using Mono.Cecil;
 
 namespace RoslynCompilerFix
 {
-    class Program
+    internal class Program
     {
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             if (args.Length < 2)
             {
@@ -19,7 +19,7 @@ namespace RoslynCompilerFix
             return 0;
         }
 
-        static void ProcessDll(string dllPath, string dllPathNew)
+        private static void ProcessDll(string dllPath, string dllPathNew)
         {
             AssemblyDefinition assemblyDef;
 

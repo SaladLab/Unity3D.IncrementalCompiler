@@ -2,18 +2,15 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
-using NLog;
-using NLog.Config;
-using NLog.Targets;
 using System.ServiceModel;
+using NLog;
 
 namespace IncrementalCompiler
 {
     partial class Program
     {
-        static int RunAsDev(string[] args)
+        private static int RunAsDev(string[] args)
         {
             SetupLogger("IncrementalCompiler.log", true);
 

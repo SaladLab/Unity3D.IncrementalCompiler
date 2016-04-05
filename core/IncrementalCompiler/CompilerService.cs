@@ -1,7 +1,7 @@
-﻿using NLog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ServiceModel;
+using NLog;
 
 namespace IncrementalCompiler
 {
