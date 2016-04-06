@@ -246,7 +246,7 @@ But how about emitting mdb from Roslyn directly?
 It could save time for generating and converting pdb.
 Good thing is that a guy at Xamarain already tried [it](https://github.com/mono/roslyn/pull/4).
 But bad thing is that it is not being maintained now.
-So I grab his work and [update it](https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler/blob/master/core/RoslynMdbWriter/README.md)
+So I grab his work and [update it](https://github.com/SaladLab/Unity3D.IncrementalCompiler/blob/master/core/RoslynMdbWriter/README.md)
 to work with latest Roslyn.
 
 ### Renaming symbol for UnityVS debugging
@@ -391,7 +391,7 @@ static void Fix_GeneratedNames_MakeHoistedLocalFieldName(MethodDefinition method
 ```
 
 You can find full source for this Roslyn hotfix at
-[CSharpCompilerFix.cs](https://github.com/SaladbowlCreative/Unity3D.IncrementalCompiler/blob/master/core/RoslynCompilerFix/CSharpCompilerFix.cs)
+[CSharpCompilerFix.cs](https://github.com/SaladLab/Unity3D.IncrementalCompiler/blob/master/core/RoslynCompilerFix/CSharpCompilerFix.cs)
 with detailed comments.
 
 ## Conclusion
