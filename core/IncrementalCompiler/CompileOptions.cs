@@ -62,7 +62,7 @@ namespace IncrementalCompiler
                             break;
 
                         case "define":
-                            Defines.Add(value);
+                            Defines.Add(value.Trim());
                             break;
 
                         case "out":
