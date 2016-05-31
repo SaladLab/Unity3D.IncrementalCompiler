@@ -64,3 +64,9 @@ AppPackages/
 
 # No APK
 *.apk
+
+# Temporary files
+*.bak
+*.tmp
+*.error
+
