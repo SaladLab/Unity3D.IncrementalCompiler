@@ -10,8 +10,8 @@ namespace IncrementalCompiler
 
             var binding = new NetNamedPipeBinding(NetNamedPipeSecurityMode.None)
             {
-                MaxBufferSize = 1048576,
-                MaxReceivedMessageSize = 1048576
+                MaxBufferSize = int.MaxValue,
+                MaxReceivedMessageSize = int.MaxValue
             };
             var ep = new EndpointAddress(address);
             var channel = ChannelFactory<ICompilerService>.CreateChannel(binding, ep);

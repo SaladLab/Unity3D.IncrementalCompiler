@@ -33,8 +33,8 @@ namespace IncrementalCompiler
                 var serviceHost = new ServiceHost(typeof(CompilerService));
                 var binding = new NetNamedPipeBinding(NetNamedPipeSecurityMode.None)
                 {
-                    MaxBufferSize = 1048576,
-                    MaxReceivedMessageSize = 1048576
+                    MaxBufferSize = int.MaxValue,
+                    MaxReceivedMessageSize = int.MaxValue
                 };
                 serviceHost.AddServiceEndpoint(typeof(ICompilerService), binding, address);
                 serviceHost.Open();
