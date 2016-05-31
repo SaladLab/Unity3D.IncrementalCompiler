@@ -52,13 +52,14 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 	protected override Program StartCompiler()
 	{
 		var arguments = new List<string>
-				   {
-					   "-debug",
-					   "-target:library",
-					   "-nowarn:0169",
-					   "-out:" + PrepareFileName(_island._output),
-					   "-define:__UNITY_PROCESSID__" + System.Diagnostics.Process.GetCurrentProcess().Id
-				   };
+		{
+			"-debug",
+			"-target:library",
+			"-nowarn:0169",
+			"-unsafe",
+			"-out:" + PrepareFileName(_island._output),
+			"-define:__UNITY_PROCESSID__" + System.Diagnostics.Process.GetCurrentProcess().Id
+		};
 		foreach (var reference in _island._references)
 		{
 			arguments.Add("-r:" + PrepareFileName(reference));
