@@ -30,6 +30,7 @@ namespace IncrementalCompiler
         [DataMember] public List<string> References = new List<string>();
         [DataMember] public List<string> Files = new List<string>();
         [DataMember] public List<string> NoWarnings = new List<string>();
+        [DataMember] public List<string> Options = new List<string>();
         [DataMember] public DebugSymbolFileType DebugSymbolFile;
         [DataMember] public PrebuiltOutputReuseType PrebuiltOutputReuse;
 
@@ -79,6 +80,10 @@ namespace IncrementalCompiler
                                     ? string.Format("CS{0:0000}", num)
                                     : id);
                             }
+                            break;
+
+                        default:
+                            Options.Add(arg);
                             break;
                     }
                 }

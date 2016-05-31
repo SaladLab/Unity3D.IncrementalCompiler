@@ -69,7 +69,8 @@ namespace IncrementalCompiler
                 _sourceMap.Values,
                 _referenceMap.Values,
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                    .WithSpecificDiagnosticOptions(specificDiagnosticOptions));
+                    .WithSpecificDiagnosticOptions(specificDiagnosticOptions)
+                    .WithAllowUnsafe(options.Options.Contains("-unsafe")));
 
             Emit(result);
 
