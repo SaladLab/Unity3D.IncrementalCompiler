@@ -8,9 +8,9 @@ internal class Mono60Compiler : Compiler
 
 	public override string Name => "Mono C# 6.0";
 
-	protected override Process CreateCompilerProcess(Platform platform, string unityEditorDataDir, string responseFile)
+	protected override Process CreateCompilerProcess(Platform platform, string monoProfile, string unityEditorDataDir, string responseFile)
 	{
-		var systemCoreDllPath = Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/System.Core.dll");
+		var systemCoreDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.Core.dll");
 
 		string processArguments;
 		if (platform == Platform.Windows)

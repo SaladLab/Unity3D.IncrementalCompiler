@@ -29,9 +29,9 @@ internal abstract class Compiler
 		this.pbd2MdbPath = pbd2MdbPath;
 	}
 
-	public int Compile(Platform platform, string unityEditorDataDir, string responseFile)
+	public int Compile(Platform platform, string monoProfile, string unityEditorDataDir, string responseFile)
 	{
-		var process = CreateCompilerProcess(platform, unityEditorDataDir, responseFile);
+		var process = CreateCompilerProcess(platform, monoProfile, unityEditorDataDir, responseFile);
 		process.OutputDataReceived += (sender, e) => outputLines.Add(e.Data);
 		process.ErrorDataReceived += (sender, e) => errorLines.Add(e.Data);
 
@@ -77,7 +77,12 @@ internal abstract class Compiler
 		}
 	}
 
-	protected abstract Process CreateCompilerProcess(Platform platform, string unityEditorDataDir, string responseFile);
+	public static string GetMonoDllPath(string unityEditorDataDir, string monoProfile, string fileName)
+	{
+		return Path.Combine(unityEditorDataDir, @"Mono/lib/mono/" + monoProfile + "/" + fileName);
+	}
+
+	protected abstract Process CreateCompilerProcess(Platform platform, string monoProfile, string unityEditorDataDir, string responseFile);
 
 	public virtual void ConvertDebugSymbols(Platform platform, string libraryPath, string unityEditorDataDir) { }
 

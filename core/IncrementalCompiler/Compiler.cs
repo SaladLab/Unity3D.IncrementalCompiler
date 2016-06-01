@@ -70,6 +70,7 @@ namespace IncrementalCompiler
                 _referenceMap.Values,
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                     .WithSpecificDiagnosticOptions(specificDiagnosticOptions)
+                    .WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default)
                     .WithAllowUnsafe(options.Options.Contains("-unsafe")));
 
             Emit(result);

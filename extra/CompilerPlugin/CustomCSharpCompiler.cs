@@ -19,7 +19,25 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 	}
 #endif
 
+	private string[] GetAdditionalReferences()
+	{
+		// calling base method via reflection
+		var bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+		var methodInfo = GetType().BaseType.GetMethod(nameof(GetAdditionalReferences), bindingFlags);
+		var result = (string[])methodInfo.Invoke(this, null);
+		return result;
+	}
+
 	private string GetCompilerPath(List<string> arguments)
+	{
+		// calling base method via reflection
+		var bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+		var methodInfo = GetType().BaseType.GetMethod(nameof(GetCompilerPath), bindingFlags);
+		var result = (string)methodInfo.Invoke(this, new object[] {arguments});
+		return result;
+	}
+
+	private string GetCompilerPathEx(List<string> arguments)
 	{
 		var basePath = Path.Combine(Directory.GetCurrentDirectory(), "Compiler");
 		var compilerPath = Path.Combine(basePath, "UniversalCompiler.exe");
@@ -29,21 +47,7 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 		}
 
 		Debug.LogWarning($"Custom C# compiler not found in project directory ({compilerPath}), using the default compiler");
-
-		// calling base method via reflection
-		var bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
-		var methodInfo = GetType().BaseType.GetMethod(nameof(GetCompilerPath), bindingFlags);
-		var result = (string)methodInfo.Invoke(this, new object[] {arguments});
-		return result;
-	}
-
-	private string[] GetAdditionalReferences()
-	{
-		// calling base method via reflection
-		var bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
-		var methodInfo = GetType().BaseType.GetMethod(nameof(GetAdditionalReferences), bindingFlags);
-		var result = (string[])methodInfo.Invoke(this, null);
-		return result;
+		return GetCompilerPath(arguments);
 	}
 
 	// Copy of MonoCSharpCompiler.StartCompiler()
@@ -56,9 +60,10 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 			"-debug",
 			"-target:library",
 			"-nowarn:0169",
-			"-unsafe",
 			"-out:" + PrepareFileName(_island._output),
-			"-define:__UNITY_PROCESSID__" + System.Diagnostics.Process.GetCurrentProcess().Id
+			"-unsafe",
+			"-define:__UNITY_PROCESSID__" + System.Diagnostics.Process.GetCurrentProcess().Id,
+			"-define:__UNITY_PROFILE__" + Path.GetFileName(base.GetProfileDirectory()).Replace(".", "_")
 		};
 		foreach (var reference in _island._references)
 		{
@@ -85,6 +90,6 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 			}
 		}
 
-		return StartCompiler(_island._target, GetCompilerPath(arguments), arguments);
+		return StartCompiler(_island._target, GetCompilerPathEx(arguments), arguments);
 	}
 }

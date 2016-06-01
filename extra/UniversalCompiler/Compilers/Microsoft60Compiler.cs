@@ -14,14 +14,14 @@ internal class Microsoft60Compiler : Compiler
 	public static bool IsAvailable(string directory) => File.Exists(Path.Combine(directory, "csc.exe")) &&
 														File.Exists(Path.Combine(directory, "pdb2mdb.exe"));
 
-	protected override Process CreateCompilerProcess(Platform platform, string unityEditorDataDir, string responseFile)
+	protected override Process CreateCompilerProcess(Platform platform, string monoProfile, string unityEditorDataDir, string responseFile)
 	{
-		var systemDllPath = Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/System.dll");
-		var systemCoreDllPath = Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/System.Core.dll");
-		var systemXmlDllPath = Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/System.Xml.dll");
-		var mscorlibDllPath = Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/mscorlib.dll");
+		var systemDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.dll");
+		var systemCoreDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.Core.dll");
+		var systemXmlDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.Xml.dll");
+		var mscorlibDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "mscorlib.dll");
 
-		string processArguments = "-nostdlib+ -noconfig "
+		string processArguments = "-nostdlib+ -noconfig -nologo "
 								  + $"-r:\"{mscorlibDllPath}\" "
 								  + $"-r:\"{systemDllPath}\" "
 								  + $"-r:\"{systemCoreDllPath}\" "
@@ -55,14 +55,10 @@ internal class Microsoft60Compiler : Compiler
 	public override void PrintCompilerOutputAndErrors()
 	{
 		// Microsoft's compiler writes all warnings and errors to the standard output channel,
-		// so move them to the error channel skipping first 3 lines that are just part of the header.
+		// so move them to the error channel
 
-		while (outputLines.Count > 3)
-		{
-			var line = outputLines[3];
-			outputLines.RemoveAt(3);
-			errorLines.Add(line);
-		}
+		errorLines.AddRange(outputLines);
+		outputLines.Clear();
 
 		base.PrintCompilerOutputAndErrors();
 	}
