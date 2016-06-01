@@ -29,12 +29,22 @@ namespace IncrementalCompiler
             {
                 "-nostdlib+",
                 "-noconfig",
-                "-r:" + @"C:/Program Files/Unity/Editor/Data\Mono/lib/mono/2.0/mscorlib.dll",
-                "-r:" + @"C:/Program Files/Unity/Editor/Data\Mono/lib/mono/2.0/System.dll",
-                "-r:" + @"C:/Program Files/Unity/Editor/Data\Mono/lib/mono/2.0/System.Core.dll",
-                "-r:" + @"C:/Program Files/Unity/Editor/Data\Mono/lib/mono/2.0/System.Xml.dll",
+#if true
+                // Unity5
+                "-r:" + @"C:/Program Files/Unity/Editor/Data/Mono/lib/mono/2.0/mscorlib.dll",
+                "-r:" + @"C:/Program Files/Unity/Editor/Data/Mono/lib/mono/2.0/System.dll",
+                "-r:" + @"C:/Program Files/Unity/Editor/Data/Mono/lib/mono/2.0/System.Core.dll",
+                "-r:" + @"C:/Program Files/Unity/Editor/Data/Mono/lib/mono/2.0/System.Xml.dll",
+#else
+                // Unity4
+                "-r:" + @"C:/Program Files (x86)/Unity/Editor/Data/Mono/lib/mono/2.0/mscorlib.dll",
+                "-r:" + @"C:/Program Files (x86)/Unity/Editor/Data/Mono/lib/mono/2.0/System.dll",
+                "-r:" + @"C:/Program Files (x86)/Unity/Editor/Data/Mono/lib/mono/2.0/System.Core.dll",
+                "-r:" + @"C:/Program Files (x86)/Unity/Editor/Data/Mono/lib/mono/2.0/System.Xml.dll",
+#endif
                 "@Temp/" + reponseFile,
             });
+
             options.WorkDirectory = curPath;
             options.References = options.References.Distinct().ToList();
             options.Files = options.Files.Distinct().ToList();
