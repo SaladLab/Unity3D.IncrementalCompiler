@@ -1,1 +1,1 @@
--unsafe
+-unsafe -define:__COMPILER_OPTION_TEST__

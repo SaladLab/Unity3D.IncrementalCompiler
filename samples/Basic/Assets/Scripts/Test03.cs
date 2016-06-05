@@ -6,6 +6,9 @@ public class Test03 : MonoBehaviour
     void Start()
     {
         GetComponent<Text>().text = "03:" + GetStringLength("Compiler");
+#if __COMPILER_OPTION_TEST__
+        GetComponent<Text>().text += ":OK";
+#endif
     }
 
     int GetStringLength(string str)
@@ -22,4 +25,3 @@ public class Test03 : MonoBehaviour
         return len;
     }
 }
-
