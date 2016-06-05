@@ -37,17 +37,11 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 		return result;
 	}
 
-	private string GetCompilerPathEx(List<string> arguments)
+	private string GetUniversalCompilerPath()
 	{
 		var basePath = Path.Combine(Directory.GetCurrentDirectory(), "Compiler");
 		var compilerPath = Path.Combine(basePath, "UniversalCompiler.exe");
-		if (File.Exists(compilerPath))
-		{
-			return compilerPath;
-		}
-
-		Debug.LogWarning($"Custom C# compiler not found in project directory ({compilerPath}), using the default compiler");
-		return GetCompilerPath(arguments);
+		return File.Exists(compilerPath) ? compilerPath : null;
 	}
 
 	// Copy of MonoCSharpCompiler.StartCompiler()
@@ -61,9 +55,6 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 			"-target:library",
 			"-nowarn:0169",
 			"-out:" + PrepareFileName(_island._output),
-			"-unsafe",
-			"-define:__UNITY_PROCESSID__" + System.Diagnostics.Process.GetCurrentProcess().Id,
-			"-define:__UNITY_PROFILE__" + Path.GetFileName(base.GetProfileDirectory()).Replace(".", "_")
 		};
 		foreach (var reference in _island._references)
 		{
@@ -90,6 +81,23 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 			}
 		}
 
-		return StartCompiler(_island._target, GetCompilerPathEx(arguments), arguments);
+		var universalCompilerPath = GetUniversalCompilerPath();
+		if (universalCompilerPath != null)
+		{
+			// use universal compiler.
+			var defaultCompilerName = Path.GetFileNameWithoutExtension(GetCompilerPath(arguments));
+			arguments.Add("-define:__UNITY_PROCESSID__" + System.Diagnostics.Process.GetCurrentProcess().Id);
+			arguments.Add("-define:__UNITY_PROFILE__" + Path.GetFileName(base.GetProfileDirectory()).Replace(".", "_"));
+			var rspFileName = "Assets/" + defaultCompilerName + ".rsp";
+			if (File.Exists(rspFileName))
+				arguments.Add("@" + rspFileName);
+			return StartCompiler(_island._target, universalCompilerPath, arguments);
+		}
+		else
+		{
+			// fallback to the default compiler.
+			Debug.LogWarning($"Universal C# compiler not found in project directory. Use the default compiler");
+			return StartCompiler(_island._target, GetCompilerPath(arguments), arguments);
+		}
 	}
 }

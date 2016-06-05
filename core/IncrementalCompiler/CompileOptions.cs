@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
+using Microsoft.CodeAnalysis;
 
 namespace IncrementalCompiler
 {
@@ -89,14 +90,18 @@ namespace IncrementalCompiler
                 }
                 else if (arg.StartsWith("@"))
                 {
-                    // more options in specified file
-                    var lines = File.ReadAllLines(arg.Substring(1));
-                    ParseArgument(lines);
+                    var subArgs = new List<string>();
+                    foreach (var line in File.ReadAllLines(arg.Substring(1)))
+                    {
+                        subArgs.AddRange(CommandLineParser.SplitCommandLineIntoArguments(line, removeHashComments: true));
+                    }
+                    ParseArgument(subArgs.ToArray());
                 }
                 else
                 {
                     var path = arg.Trim('"');
-                    Files.Add(path);
+                    if (path.Length > 0)
+                        Files.Add(path);
                 }
             }
         }
