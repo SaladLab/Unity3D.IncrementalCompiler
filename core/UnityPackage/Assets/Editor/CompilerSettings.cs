@@ -210,6 +210,7 @@ public class CompilerSettings : EditorWindow
         }
         catch (Exception e)
         {
+            Debug.LogWarning("GetUniversalCompilerLastBuildLogs:" + e);
         }
 
         return _ucLastBuildLog;
