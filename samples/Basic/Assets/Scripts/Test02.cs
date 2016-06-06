@@ -14,12 +14,12 @@ public class Test02 : MonoBehaviour
         int local_c = (int)(param_a + param_b);
         if (param_a > 0)
         {
-            string local_d = "A+" + param_b;
+            string local_d = "A+" + local_c + "/" + param_b;
             return local_d;
         }
         else
         {
-            string local_e = "A-" + param_b;
+            string local_e = "A-" + local_c + "/" + param_b;
             return local_e;
         }
     }
