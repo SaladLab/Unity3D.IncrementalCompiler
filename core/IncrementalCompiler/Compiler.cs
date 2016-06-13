@@ -264,10 +264,16 @@ namespace IncrementalCompiler
             }
         }
 
-        private static string GetDiagnosticString(Diagnostic diagnostic, string type)
+        private string GetDiagnosticString(Diagnostic diagnostic, string type)
         {
             var line = diagnostic.Location.GetLineSpan();
-            return $"{line.Path}({line.StartLinePosition.Line + 1},{line.StartLinePosition.Character + 1}): " + $"{type} {diagnostic.Id}: {diagnostic.GetMessage()}";
+
+            // Unity3d must have a relative path starting with "Assets/".
+            var path = (line.Path.StartsWith(_options.WorkDirectory + "/") || line.Path.StartsWith(_options.WorkDirectory + "\\"))
+                ? line.Path.Substring(_options.WorkDirectory.Length + 1)
+                : line.Path;
+
+            return $"{path}({line.StartLinePosition.Line + 1},{line.StartLinePosition.Character + 1}): " + $"{type} {diagnostic.Id}: {diagnostic.GetMessage()}";
         }
 
         public static int ConvertPdb2Mdb(string dllFile)
