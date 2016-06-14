@@ -5,13 +5,18 @@ public class Test04 : MonoBehaviour
 {
     // warning test
 
-    private Hashtable table;  // CS0649
+    [SerializeField]
+    private Hashtable tableSerialized;   // CS0649
+    private Hashtable tableAssigned;     // CS0649
 
-    private int x = 1;        // CS0414
+    [SerializeField]
+    private int xSerialized = 1;         // CS0414
+    private int xAssigned = 1;           // CS0414
 
     public void Func(object o, string p)
     {
-        int j;                // CS0168
-        table[p] = o;
+        int j;                          // CS0168
+        tableSerialized[p] = o;
+        tableAssigned[p] = o;
     }
 }

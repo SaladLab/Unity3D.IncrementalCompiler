@@ -37,6 +37,16 @@ namespace RoslynCompilerFix
                             Fix_LambdaFrame_Constructor(method);
                     }
                 }
+
+                var sourceAssemblySymbol = module.GetType("Microsoft.CodeAnalysis.CSharp.Symbols.SourceAssemblySymbol");
+                if (sourceAssemblySymbol != null)
+                {
+                    foreach (var method in sourceAssemblySymbol.Methods)
+                    {
+                        if (method.Name == "GetUnusedFieldWarnings")
+                            Fix_SourceAssemblySymbol_GetUnusedFieldWarnings(method);
+                    }
+                }
             }
         }
 
@@ -236,6 +246,67 @@ namespace RoslynCompilerFix
 
             il.InsertBefore(baseInst, il.Create(OpCodes.Ldstr, "<>m__"));
             il.InsertBefore(baseInst2, il.Create(OpCodes.Call, concat));
+        }
+
+        private static void Fix_SourceAssemblySymbol_GetUnusedFieldWarnings(MethodDefinition method)
+        {
+            // Goal:
+            //   Add "Skip CS0649 warning for a field has attributes" to GetUnusedFieldWarnings in SourceAssemblySymbol
+            //
+            // How for Roslyn:
+            //   Add following statements after "if (!field.CanBeReferencedByName) { continue; }"
+            //     if (!field.GetAttributes().IsEmpty) { continue; }
+            //
+            // How for IL:
+            //   IL_0078: ldloc.s 4
+            //   IL_007a: callvirt instance bool Microsoft.CodeAnalysis.CSharp.Symbol::get_CanBeReferencedByName()
+            //   IL_007f: brfalse IL_018b
+            //   >> IL_?: ldloc.s 4
+            //   >> IL_?: callvirt instance valuetype ImmutableArray<CSharpAttributeData> Microsoft.CodeAnalysis.CSharp.Symbol::GetAttributes()
+            //   >> IL_?: stloc 13
+            //   >> IL_?: ldloca.s 13
+            //   >> IL_?: call instance bool valuetype ImmutableArray<CSharpAttributeData>::get_IsEmpty()
+            //   >> IL_?: brfalse IL_018b
+
+            var il = method.Body.GetILProcessor();
+            var attributeDataType = method.Module.GetType("Microsoft.CodeAnalysis.CSharp.Symbols.CSharpAttributeData");
+
+            // find Methods
+            var symbolType = method.Module.GetType("Microsoft.CodeAnalysis.CSharp.Symbol");
+            var symbolGetAttributesMethod = symbolType.GetMethod("GetAttributes");
+            var symbolGetAttributes = method.Module.Import(symbolGetAttributesMethod);
+            var symbolReturnType = (GenericInstanceType)symbolGetAttributesMethod.ReturnType;
+            var symbolIsEmptyMethod = symbolReturnType.Resolve().GetMethod("get_IsEmpty");
+            var symbolIsEmptyMethodRef = method.Module.Import(symbolIsEmptyMethod);
+            var symbolIsEmpty = symbolIsEmptyMethodRef.MakeGeneric(symbolReturnType.GenericArguments.ToArray());
+
+            // Add local var of ImmutableArray<CSharpAttributeData>
+            var attributeArrayType = new GenericInstanceType(symbolReturnType.ElementType);
+            var attributeArrayLocalIndex = il.Body.Variables.Count;
+            attributeArrayType.GenericArguments.Add(attributeDataType);
+            il.Body.Variables.Add(new VariableDefinition(attributeArrayType));
+
+            for (var i = 0; i < il.Body.Instructions.Count; i++)
+            {
+                var inst = il.Body.Instructions[i];
+                if (inst.OpCode.Code == Code.Callvirt && ((MethodReference)inst.Operand).Name == "get_CanBeReferencedByName")
+                {
+                    if (inst.Previous.OpCode.Code != Code.Ldloc_S)
+                        throw new InvalidOperationException();
+                    if (inst.Next.OpCode.Code != Code.Brfalse)
+                        throw new InvalidOperationException();
+
+                    var baseInst = inst.Next.Next;
+
+                    il.InsertBefore(baseInst, il.Create(OpCodes.Ldloc_S, (VariableDefinition)inst.Previous.Operand));
+                    il.InsertBefore(baseInst, il.Create(OpCodes.Callvirt, symbolGetAttributes));
+                    il.InsertBefore(baseInst, il.Create(OpCodes.Stloc, il.Body.Variables[attributeArrayLocalIndex]));
+                    il.InsertBefore(baseInst, il.Create(OpCodes.Ldloca_S, il.Body.Variables[attributeArrayLocalIndex]));
+                    il.InsertBefore(baseInst, il.Create(OpCodes.Call, symbolIsEmpty));
+                    il.InsertBefore(baseInst, il.Create(OpCodes.Brfalse, (Instruction)inst.Next.Operand));
+                    break;
+                }
+            }
         }
     }
 }
