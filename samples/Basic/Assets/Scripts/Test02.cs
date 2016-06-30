@@ -23,4 +23,9 @@ public class Test02 : MonoBehaviour
             return local_e;
         }
     }
+
+    public void Rerun()
+    {
+        Start();
+    }
 }

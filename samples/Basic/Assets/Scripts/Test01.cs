@@ -28,5 +28,10 @@ public class Test01 : MonoBehaviour
         yield return null;
         GetComponent<Text>().text = b(v);
     }
+
+    public void Rerun()
+    {
+        Start();
+    }
 }
 

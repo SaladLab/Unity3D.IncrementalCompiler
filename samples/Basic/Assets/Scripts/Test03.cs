@@ -1,11 +1,11 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class Test03 : MonoBehaviour
 {
     void Start()
     {
+        Debug.Log("Test03.Start");
         GetComponent<Text>().text = "03:" + GetStringLength("Compiler");
 #if __COMPILER_OPTION_TEST__
         GetComponent<Text>().text += ":OK";
@@ -24,5 +24,10 @@ public class Test03 : MonoBehaviour
             }
         }
         return len;
+    }
+
+    public void Rerun()
+    {
+        Start();
     }
 }
