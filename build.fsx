@@ -19,7 +19,7 @@ Target "Build" <| fun _ -> buildSolution solution
 
 Target "Package" (fun _ -> 
     // pack IncrementalCompiler.exe with dependent module dlls to packed one
-    let ilrepackExe = (getNugetPackage "ILRepack" "2.0.9") @@ "tools" @@ "ILRepack.exe"
+    let ilrepackExe = (getNugetPackage "ILRepack" "2.0.10") @@ "tools" @@ "ILRepack.exe"
     Shell.Exec(ilrepackExe,
                "/wildcards /out:IncrementalCompiler.packed.exe IncrementalCompiler.exe *.dll",
                "./core/IncrementalCompiler/bin/Release") |> ignore
@@ -27,6 +27,15 @@ Target "Package" (fun _ ->
     Shell.Exec("./core/RoslynCompilerFix/bin/Release/RoslynCompilerFix.exe",
                "IncrementalCompiler.packed.exe IncrementalCompiler.packed.fixed.exe",
                "./core/IncrementalCompiler/bin/Release") |> ignore
+    // code signing
+    if hasBuildParam "sign" then (
+        let certFile = getBuildParam "sign"
+        let timeUrl = "http://timestamp.verisign.com/scripts/timstamp.dll"
+        let exeFile = "./core/IncrementalCompiler/bin/Release/IncrementalCompiler.packed.fixed.exe"
+        Shell.Exec(@"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\signtool.exe",
+                   sprintf "sign /v /f %s /t %s %s" certFile timeUrl exeFile,
+                   ".") |> ignore
+    )
     // let's make package
     for target in ["Unity4"; "Unity5"] do
         let targetDir = binDir @@ target
@@ -50,7 +59,7 @@ Target "Package" (fun _ ->
 
 Target "Help" <| fun _ -> 
     showUsage solution (fun name -> 
-        if name = "package" then Some("Build package", "")
+        if name = "package" then Some("Build package", "sign")
         else None)
 
 "Clean"
