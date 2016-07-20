@@ -268,6 +268,10 @@ namespace IncrementalCompiler
         {
             var line = diagnostic.Location.GetLineSpan();
 
+            // Path could be null
+            if (string.IsNullOrEmpty(line.Path))
+                return $"None: " + $"{type} {diagnostic.Id}: {diagnostic.GetMessage()}";
+
             // Unity3d must have a relative path starting with "Assets/".
             var path = (line.Path.StartsWith(_options.WorkDirectory + "/") || line.Path.StartsWith(_options.WorkDirectory + "\\"))
                 ? line.Path.Substring(_options.WorkDirectory.Length + 1)
