@@ -1,7 +1,7 @@
 ## RoslynMdbWriter
 
 This modules let roslyn to emit an MDB debugging symbol file instead of PDB.
-Most of code is based on [marek-safar](https://github.com/marek-safar)'s
+Most of code is based on [DavidKarlas](https://github.com/DavidKarlas)'s
 [work](https://github.com/mono/roslyn/pull/4). But some works have been done
 for handling changes of Roslyn.
 
