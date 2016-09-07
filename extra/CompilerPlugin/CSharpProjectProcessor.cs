@@ -19,8 +19,10 @@ public class CSharpProjectProcessor : AssetPostprocessor
 
 	private static void UpdateProjectFile(string file)
 	{
+		// strip out `LangVersion` elements
 		var lines = File.ReadAllLines(file);
-		lines = lines.Where(line => line.Contains("LangVersion") == false).ToArray();
-		File.WriteAllLines(file, lines);
+		var newLines = lines.Where(line => line.Contains("<LangVersion") == false && line.Contains("LangVersion>") == false).ToArray();
+		if (lines.Count() != newLines.Count())
+			File.WriteAllLines(file, newLines);
 	}
 }
