@@ -51,16 +51,15 @@ internal class Program
 		var responseFile = args[0];
 		var compilationOptions = File.ReadAllLines(responseFile.TrimStart('@'));
 		var unityEditorDataDir = GetUnityEditorDataDir();
+		var monoProfileDir = GetMonoProfileDir(compilationOptions);
 		var projectDir = Directory.GetCurrentDirectory();
 		var targetAssembly = compilationOptions.First(line => line.StartsWith("-out:")).Substring(10).Trim('\'');
-		var monoProfile = compilationOptions.First(line => line.StartsWith("-define:__UNITY_PROFILE__")).Substring(25);
-		if (monoProfile == "2_0") monoProfile = "2.0";
 
 		logger?.Append($"CSharpCompilerWrapper.exe version: {Assembly.GetExecutingAssembly().GetName().Version}");
 		logger?.Append($"Platform: {CurrentPlatform}");
-		logger?.Append($"Mono profile: {monoProfile}");
 		logger?.Append($"Target assembly: {targetAssembly}");
 		logger?.Append($"Project directory: {projectDir}");
+		logger?.Append($"Mono profile directory: {monoProfileDir}");
 		logger?.Append($"Unity 'Data' or 'Frameworks' directory: {unityEditorDataDir}");
 
 		if (CurrentPlatform == Platform.Linux)
@@ -70,7 +69,7 @@ internal class Program
 			return -1;
 		}
 
-		var compiler = CreateCompiler(settings.Compiler, logger, CurrentPlatform, monoProfile, projectDir, compilationOptions, unityEditorDataDir);
+		var compiler = CreateCompiler(settings.Compiler, logger, CurrentPlatform, monoProfileDir, projectDir, compilationOptions, unityEditorDataDir);
 
 		logger?.Append($"Compiler: {compiler.Name}");
 		logger?.Append("");
@@ -78,7 +77,7 @@ internal class Program
 		logger?.Append("");
 
 		var stopwatch = Stopwatch.StartNew();
-		var exitCode = compiler.Compile(CurrentPlatform, monoProfile, unityEditorDataDir, responseFile);
+		var exitCode = compiler.Compile(CurrentPlatform, monoProfileDir, unityEditorDataDir, responseFile);
 		stopwatch.Stop();
 
 		logger?.Append($"Elapsed time: {stopwatch.ElapsedMilliseconds / 1000f:F2} sec");
@@ -108,19 +107,19 @@ internal class Program
 		return 0;
 	}
 
-	private static Compiler CreateCompiler(CompilerType compilerType, Logger logger, Platform platform, string monoProfile, string projectDir, string[] compilationOptions, string unityEditorDataDir)
+	private static Compiler CreateCompiler(CompilerType compilerType, Logger logger, Platform platform, string monoProfileDir, string projectDir, string[] compilationOptions, string unityEditorDataDir)
 	{
 		var compilerDirectory = Path.Combine(projectDir, LANGUAGE_SUPPORT_DIR);
 
 		switch (compilerType)
 		{
 			case CompilerType.Auto:
-				return FindSuitableCompiler(logger, platform, monoProfile, projectDir, compilationOptions, unityEditorDataDir);
+				return FindSuitableCompiler(logger, platform, monoProfileDir, projectDir, compilationOptions, unityEditorDataDir);
 
 			case CompilerType.Mono3:
-				var stockCompilerPath = monoProfile == "2.0"
+				var stockCompilerPath = monoProfileDir.IndexOf("2.0") != -1
 					? Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/gmcs.exe")
-					: Path.Combine(unityEditorDataDir, @"Mono/lib/mono/" + monoProfile + "/smcs.exe");
+					: Path.Combine(monoProfileDir, "smcs.exe");
 				return new Mono30Compiler(logger, stockCompilerPath);
 
 			case CompilerType.Mono5:
@@ -147,7 +146,7 @@ internal class Program
 		return null;
 	}
 
-	private static Compiler FindSuitableCompiler(Logger logger, Platform platform, string monoProfile, string projectDir, string[] compilationOptions, string unityEditorDataDir)
+	private static Compiler FindSuitableCompiler(Logger logger, Platform platform, string monoProfileDir, string projectDir, string[] compilationOptions, string unityEditorDataDir)
 	{
 		Compiler compiler = null;
 
@@ -190,9 +189,9 @@ internal class Program
 		if (compiler == null)
 		{
 			// Using stock Mono C# 3.0 compiler
-			var stockCompilerPath = monoProfile == "2.0"
+			var stockCompilerPath = monoProfileDir.IndexOf("2.0") != -1
 				? Path.Combine(unityEditorDataDir, @"Mono/lib/mono/2.0/gmcs.exe")
-				: Path.Combine(unityEditorDataDir, @"Mono/lib/mono/" + monoProfile + "/smcs.exe");
+				: Path.Combine(monoProfileDir, "smcs.exe");
 			compiler = new Mono30Compiler(logger, stockCompilerPath);
 		}
 
@@ -241,5 +240,18 @@ internal class Program
 		var index = monoPath.IndexOf("/Mono/lib/", StringComparison.InvariantCultureIgnoreCase);
 		var path = monoPath.Substring(0, index);
 		return path;
+	}
+
+	private static string GetMonoProfileDir(string[] compilationOptions)
+	{
+		/* Looking for something like
+		-r:"C:\Program Files\Unity\Editor\Data\Mono\lib\mono\unity\System.Xml.Linq.dll"
+		or
+		-r:'C:\Program Files\Unity\Editor\Data\Mono\lib\mono\unity\System.Xml.Linq.dll'
+		*/
+		var reference = compilationOptions.First(line => line.StartsWith("-r:") && line.Contains("System.Xml.Linq.dll"));
+		var systemXmlLinqPath = reference.Replace("'", "").Replace("\"", "").Substring(3);
+		var profileDir = Path.GetDirectoryName(systemXmlLinqPath);
+		return profileDir;
 	}
 }

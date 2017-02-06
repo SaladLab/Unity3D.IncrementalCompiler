@@ -13,12 +13,12 @@ internal class Incremental60Compiler : Compiler
 
 	public static bool IsAvailable(string directory) => File.Exists(Path.Combine(directory, "IncrementalCompiler.exe"));
 
-	protected override Process CreateCompilerProcess(Platform platform, string monoProfile, string unityEditorDataDir, string responseFile)
+	protected override Process CreateCompilerProcess(Platform platform, string monoProfileDir, string unityEditorDataDir, string responseFile)
 	{
-		var systemDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.dll");
-		var systemCoreDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.Core.dll");
-		var systemXmlDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.Xml.dll");
-		var mscorlibDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "mscorlib.dll");
+		var systemDllPath = Path.Combine(monoProfileDir, "System.dll");
+		var systemCoreDllPath = Path.Combine(monoProfileDir, "System.Core.dll");
+		var systemXmlDllPath = Path.Combine(monoProfileDir, "System.Xml.dll");
+		var mscorlibDllPath = Path.Combine(monoProfileDir, "mscorlib.dll");
 
 		string processArguments = "-nostdlib+ -noconfig "
 								  + $"-r:\"{mscorlibDllPath}\" "

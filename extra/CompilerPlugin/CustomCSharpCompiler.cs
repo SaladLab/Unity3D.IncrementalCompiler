@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using UnityEditor;
 using UnityEditor.Scripting;
 using UnityEditor.Scripting.Compilers;
 using UnityEditor.Utils;
@@ -55,6 +56,7 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 			"-target:library",
 			"-nowarn:0169",
 			"-out:" + PrepareFileName(_island._output),
+			"-unsafe"
 		};
 		foreach (var reference in _island._references)
 		{
@@ -74,7 +76,7 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 		var additionalReferences = GetAdditionalReferences();
 		foreach (string path in additionalReferences)
 		{
-			var text = Path.Combine(GetProfileDirectory(), path);
+			var text = Path.Combine(GetProfileDirectoryViaReflection(), path);
 			if (File.Exists(text))
 			{
 				arguments.Add("-r:" + PrepareFileName(text));
@@ -85,19 +87,80 @@ internal class CustomCSharpCompiler : MonoCSharpCompiler
 		if (universalCompilerPath != null)
 		{
 			// use universal compiler.
-			var defaultCompilerName = Path.GetFileNameWithoutExtension(GetCompilerPath(arguments));
 			arguments.Add("-define:__UNITY_PROCESSID__" + System.Diagnostics.Process.GetCurrentProcess().Id);
-			arguments.Add("-define:__UNITY_PROFILE__" + Path.GetFileName(base.GetProfileDirectory()).Replace(".", "_"));
-			var rspFileName = "Assets/" + defaultCompilerName + ".rsp";
+
+			// this function should be run because it addes an item to arguments
+			var compilerPath = GetCompilerPath(arguments);
+
+			var rspFileName = "Assets/mcs.rsp";
 			if (File.Exists(rspFileName))
+			{
 				arguments.Add("@" + rspFileName);
+			}
+			else
+			{
+				var defaultCompilerName = Path.GetFileNameWithoutExtension(compilerPath);
+				rspFileName = "Assets/" + defaultCompilerName + ".rsp";
+				if (File.Exists(rspFileName))
+					arguments.Add("@" + rspFileName);
+			}
+
 			return StartCompiler(_island._target, universalCompilerPath, arguments);
 		}
 		else
 		{
 			// fallback to the default compiler.
 			Debug.LogWarning($"Universal C# compiler not found in project directory. Use the default compiler");
-			return StartCompiler(_island._target, GetCompilerPath(arguments), arguments);
+			return base.StartCompiler();
 		}
+	}
+
+	// In Unity 5.5 and earlier GetProfileDirectory() was an instance method of MonoScriptCompilerBase class.
+	// In Unity 5.6 the method is removed and the profile directory is detected differently.
+	private string GetProfileDirectoryViaReflection()
+	{
+		var monoScriptCompilerBaseType = typeof(MonoScriptCompilerBase);
+		var getProfileDirectoryMethodInfo = monoScriptCompilerBaseType.GetMethod("GetProfileDirectory", BindingFlags.NonPublic | BindingFlags.Instance);
+		if (getProfileDirectoryMethodInfo != null)
+		{
+			// For any Unity version prior to 5.6
+			string result = (string)getProfileDirectoryMethodInfo.Invoke(this, null);
+			return result;
+		}
+
+		// For Unity 5.6
+		var monoIslandType = typeof(MonoIsland);
+		var apiCompatibilityLevelFieldInfo = monoIslandType.GetField("_api_compatibility_level");
+		var apiCompatibilityLevel = (ApiCompatibilityLevel)apiCompatibilityLevelFieldInfo.GetValue(_island);
+
+		string profile;
+		if (apiCompatibilityLevel != ApiCompatibilityLevel.NET_2_0)
+		{
+			profile = GetMonoProfileLibDirectory(apiCompatibilityLevel);
+		}
+		else
+		{
+			profile = "2.0-api";
+		}
+
+		string profileDirectory = GetProfileDirectory(profile, "MonoBleedingEdge");
+		return profileDirectory;
+	}
+
+	private static string GetMonoProfileLibDirectory(ApiCompatibilityLevel apiCompatibilityLevel)
+	{
+		var buildPipelineType = typeof(BuildPipeline);
+		var compatibilityProfileToClassLibFolderMethodInfo = buildPipelineType.GetMethod("CompatibilityProfileToClassLibFolder", BindingFlags.NonPublic | BindingFlags.Static);
+		string profile = (string)compatibilityProfileToClassLibFolderMethodInfo.Invoke(null, new object[] { apiCompatibilityLevel });
+
+		var apiCompatibilityLevelNet46 = (ApiCompatibilityLevel)3;
+		string monoInstallation = apiCompatibilityLevel != apiCompatibilityLevelNet46 ? "Mono" : "MonoBleedingEdge";
+		return GetProfileDirectory(profile, monoInstallation);
+	}
+
+	private static string GetProfileDirectory(string profile, string monoInstallation)
+	{
+		string monoInstallation2 = MonoInstallationFinder.GetMonoInstallation(monoInstallation);
+		return Path.Combine(monoInstallation2, Path.Combine("lib", Path.Combine("mono", profile)));
 	}
 }

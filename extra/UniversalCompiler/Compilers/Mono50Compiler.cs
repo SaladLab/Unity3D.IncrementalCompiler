@@ -6,9 +6,9 @@ internal class Mono50Compiler : Compiler
 	public Mono50Compiler(Logger logger, string compilerPath) : base(logger, compilerPath, null) { }
 	public override string Name => "Mono C# 5.0";
 
-	protected override Process CreateCompilerProcess(Platform platform, string monoProfile, string unityEditorDataDir, string responseFile)
+	protected override Process CreateCompilerProcess(Platform platform, string monoProfileDir, string unityEditorDataDir, string responseFile)
 	{
-		var systemCoreDllPath = GetMonoDllPath(unityEditorDataDir, monoProfile, "System.Core.dll");
+		var systemCoreDllPath = Path.Combine(monoProfileDir, "System.Core.dll");
 
 		string processArguments;
 		if (platform == Platform.Windows)
