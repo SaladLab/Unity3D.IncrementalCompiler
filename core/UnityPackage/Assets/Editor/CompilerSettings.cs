@@ -58,6 +58,9 @@ public class CompilerSettings : EditorWindow
     private DateTime _icsLastWriteTime;
     private IncrementalCompilerSettings _ics;
 
+    private string _version;
+    private Process icProcess;
+
     [MenuItem("Assets/Open C# Compiler Settings...")]
     public static void ShowWindow()
     {
@@ -161,8 +164,13 @@ public class CompilerSettings : EditorWindow
 
     private string GetUniversalCompilerVersion()
     {
+        if (_version != null) {
+            return _version;
+        }
+
         var assemblyName = AssemblyName.GetAssemblyName("./Compiler/UniversalCompiler.exe");
-        return assemblyName != null ? assemblyName.Version.ToString() : "";
+        _version = assemblyName != null ? assemblyName.Version.ToString() : "";
+        return _version;
     }
 
     private void ShowUniversalCompilerClientLog()
@@ -326,6 +334,10 @@ public class CompilerSettings : EditorWindow
 
     private Process GetIncrementalCompilerProcess()
     {
+        if (icProcess != null) {
+            return icProcess;
+        }
+
         try
         {
             var processes = Process.GetProcessesByName("IncrementalCompiler");
@@ -333,7 +345,8 @@ public class CompilerSettings : EditorWindow
             {
                 var dir = Directory.GetCurrentDirectory();
                 if (process.MainModule.FileName.StartsWith(dir))
-                    return process;
+                    icProcess = process;
+                    return icProcess;
             }
             return null;
         }
