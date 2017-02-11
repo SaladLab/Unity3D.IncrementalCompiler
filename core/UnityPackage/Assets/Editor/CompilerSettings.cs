@@ -53,13 +53,11 @@ public class CompilerSettings : EditorWindow
 
     private DateTime _ucsLastWriteTime;
     private UniversalCompilerSettings _ucs;
-    private DateTime _ucLogLastWriteTime;
+    private string _ucVersion;
     private string[] _ucLastBuildLog = { "", "", "" };
     private DateTime _icsLastWriteTime;
     private IncrementalCompilerSettings _ics;
-
-    private string _version;
-    private Process icProcess;
+    private Process _icProcess;
 
     [MenuItem("Assets/Open C# Compiler Settings...")]
     public static void ShowWindow()
@@ -164,13 +162,13 @@ public class CompilerSettings : EditorWindow
 
     private string GetUniversalCompilerVersion()
     {
-        if (_version != null) {
-            return _version;
+        if (_ucVersion != null) {
+            return _ucVersion;
         }
 
         var assemblyName = AssemblyName.GetAssemblyName("./Compiler/UniversalCompiler.exe");
-        _version = assemblyName != null ? assemblyName.Version.ToString() : "";
-        return _version;
+        _ucVersion = assemblyName != null ? assemblyName.Version.ToString() : "";
+        return _ucVersion;
     }
 
     private void ShowUniversalCompilerClientLog()
@@ -334,19 +332,21 @@ public class CompilerSettings : EditorWindow
 
     private Process GetIncrementalCompilerProcess()
     {
-        if (icProcess != null) {
-            return icProcess;
-        }
+        if (_icProcess != null && _icProcess.HasExited == false)
+            return _icProcess;
 
+        _icProcess = null;
         try
         {
             var processes = Process.GetProcessesByName("IncrementalCompiler");
+            var dir = Directory.GetCurrentDirectory();
             foreach (var process in processes)
             {
-                var dir = Directory.GetCurrentDirectory();
                 if (process.MainModule.FileName.StartsWith(dir))
-                    icProcess = process;
-                    return icProcess;
+                {
+                    _icProcess = process;
+                    return _icProcess;
+                }
             }
             return null;
         }
