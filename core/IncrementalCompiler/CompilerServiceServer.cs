@@ -8,7 +8,6 @@ namespace IncrementalCompiler
 {
     public class CompilerServiceServer
     {
-
         private static ServiceHost serviceHost;
 
         public static int Run(Logger logger, int parentProcessId)
@@ -51,7 +50,7 @@ namespace IncrementalCompiler
 
             if (parentProcess != null)
             {
-                //WaitForExit returns immediately instead of waiting on Mac so use while loop
+                // WaitForExit returns immediately instead of waiting on Mac so use while loop
                 if (PlatformHelper.CurrentPlatform == Platform.Mac)
                 {
                     while (!parentProcess.HasExited)
