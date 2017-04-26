@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Cci;
 using Roslyn.Utilities;
-using Microsoft.CodeAnalysis;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Mono.CompilerServices.SymbolWriter
 {
@@ -74,12 +74,12 @@ namespace Mono.CompilerServices.SymbolWriter
 
 		public void Close ()
 		{
-			var heapBuilder = (MetadataHeapsBuilder)typeof(MetadataWriter).GetRuntimeFields ().First ((f) => f.Name == "heaps").GetValue (writer);
+			var metadata = (MetadataBuilder)typeof(MetadataWriter).GetRuntimeFields ().First ((f) => f.Name == "metadata").GetValue (writer);
 
 			Guid moduleVersionId = Guid.Empty;
-			var guidIndex = (Dictionary<Guid, int>)typeof(MetadataHeapsBuilder).GetRuntimeFields ().First ((f) => f.Name == "_guids").GetValue (heapBuilder);
+			var guidIndex = (Dictionary<Guid, GuidHandle>)typeof(MetadataBuilder).GetRuntimeFields ().First ((f) => f.Name == "_guids").GetValue (metadata);
 			foreach (var pair in guidIndex) {
-				if (pair.Value == 1) {
+				if (pair.Value.GetHashCode() == 1) { // This is hack because GetHashCode() returns this._index
 					moduleVersionId = pair.Key;
 					break;
 				}
@@ -242,32 +242,32 @@ namespace Mono.CompilerServices.SymbolWriter
 
 		public void OpenMapTokensToSourceSpans ()
 		{
-			var assembly = writer.Context.Module.AsAssembly;
-			if (assembly != null && assembly.Kind == OutputKind.WindowsRuntimeMetadata) {
-				//I guess Mono doesn't care about .winmdobj file generation
-			} else {
-				throw new NotUsedInRoslynException ();
-			}
+			//var assembly = writer.Context.Module.AsAssembly;
+			//if (assembly != null && assembly.Kind == OutputKind.WindowsRuntimeMetadata) {
+			//	//I guess Mono doesn't care about .winmdobj file generation
+			//} else {
+			//	throw new NotUsedInRoslynException ();
+			//}
 		}
 
 		public void CloseMapTokensToSourceSpans ()
 		{
-			var assembly = writer.Context.Module.AsAssembly;
-			if (assembly != null && assembly.Kind == OutputKind.WindowsRuntimeMetadata) {
-				//I guess Mono doesn't care about .winmdobj file generation
-			} else {
-				throw new NotUsedInRoslynException ();
-			}
+			//var assembly = writer.Context.Module.AsAssembly;
+			//if (assembly != null && assembly.Kind == OutputKind.WindowsRuntimeMetadata) {
+			//	//I guess Mono doesn't care about .winmdobj file generation
+			//} else {
+			//	throw new NotUsedInRoslynException ();
+			//}
 		}
 
 		public void MapTokenToSourceSpan (uint token, ISymUnmanagedDocumentWriter document, uint startLine, uint startColumn, uint endLine, uint endColumn)
 		{
-			var assembly = writer.Context.Module.AsAssembly;
-			if (assembly != null && assembly.Kind == OutputKind.WindowsRuntimeMetadata) {
-				//I guess Mono doesn't care about .winmdobj file generation
-			} else {
-				throw new NotUsedInRoslynException ();
-			}
+			//var assembly = writer.Context.Module.AsAssembly;
+			//if (assembly != null && assembly.Kind == OutputKind.WindowsRuntimeMetadata) {
+			//	//I guess Mono doesn't care about .winmdobj file generation
+			//} else {
+			//	throw new NotUsedInRoslynException ();
+			//}
 		}
 
 		#endregion

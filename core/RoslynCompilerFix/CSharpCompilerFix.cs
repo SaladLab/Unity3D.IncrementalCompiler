@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Mono.Cecil;
@@ -10,6 +11,8 @@ namespace RoslynCompilerFix
     {
         public static void Process(AssemblyDefinition assemblyDef)
         {
+            var hitSet = new HashSet<string>();
+
             foreach (var module in assemblyDef.Modules)
             {
                 var generatedNames = module.GetType("Microsoft.CodeAnalysis.CSharp.Symbols.GeneratedNames");
@@ -18,13 +21,25 @@ namespace RoslynCompilerFix
                     foreach (var method in generatedNames.Methods)
                     {
                         if (method.Name == "MakeHoistedLocalFieldName")
+                        {
+                            hitSet.Add(method.Name);
                             Fix_GeneratedNames_MakeHoistedLocalFieldName(method);
+                        }
                         else if (method.Name == "MakeMethodScopedSynthesizedName")
+                        {
+                            hitSet.Add(method.Name);
                             Fix_GeneratedNames_MakeMethodScopedSynthesizedName(method);
+                        }
                         else if (method.Name == "ThisProxyFieldName")
+                        {
+                            hitSet.Add(method.Name);
                             Fix_GeneratedNames_ThisProxyFieldName(method);
+                        }
                         else if (method.Name == "MakeLambdaMethodName")
+                        {
+                            hitSet.Add(method.Name);
                             Fix_GeneratedNames_MakeLambdaMethodName(method);
+                        }
                     }
                 }
 
@@ -34,7 +49,10 @@ namespace RoslynCompilerFix
                     foreach (var method in lambdaFrame.Methods)
                     {
                         if (method.Name == ".ctor")
+                        {
+                            hitSet.Add(lambdaFrame.FullName);
                             Fix_LambdaFrame_Constructor(method);
+                        }
                     }
                 }
 
@@ -44,9 +62,17 @@ namespace RoslynCompilerFix
                     foreach (var method in sourceAssemblySymbol.Methods)
                     {
                         if (method.Name == "GetUnusedFieldWarnings")
+                        {
+                            hitSet.Add(method.Name);
                             Fix_SourceAssemblySymbol_GetUnusedFieldWarnings(method);
+                        }
                     }
                 }
+            }
+
+            foreach (var hit in hitSet.ToList().OrderBy(x => x))
+            {
+                Console.WriteLine(hit);
             }
         }
 
@@ -181,18 +207,18 @@ namespace RoslynCompilerFix
             //   >> IL_?: ldarg.1
             //   >> IL_?: callvirt instance string Microsoft.CodeAnalysis.CSharp.Symbol::get_Name()
             //   >> IL_?: ldstr ">c__AnonStorey"
-            //   IL_0001: ldarg.2
-            //   IL_0002: ldarg.3
-            //   IL_0003: ldarg.s closureId
-            //   IL_0005: call string Microsoft.CodeAnalysis.CSharp.LambdaFrame::MakeName(class Microsoft.CodeAnalysis.SyntaxNode, valuetype Microsoft.CodeAnalysis.CodeGen.DebugId, valuetype Microsoft.CodeAnalysis.CodeGen.DebugId)
+            //   IL_0001: ldarg.s scopeSyntaxOpt
+            //   IL_0003: ldarg.s methodId
+            //   IL_0005: ldarg.s closureId
+            //   IL_0007: call string Microsoft.CodeAnalysis.CSharp.LambdaFrame::MakeName(...)
             //   >> IL_?: call string [mscorlib]System.String::Concat(string, string, string, string)
-            //   IL_000a: ldarg.1
-            //   IL_000b: call instance void Microsoft.CodeAnalysis.CSharp.Symbols.SynthesizedContainer::.ctor(string, class Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol)
+            //   IL_000c: ldarg.2
+            //   IL_000d: call instance void Microsoft.CodeAnalysis.CSharp.Symbols.SynthesizedContainer::.ctor(string, class Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol)
 
             var il = method.Body.GetILProcessor();
             var baseInst = il.Body.Instructions[1];
             var baseInst2 = il.Body.Instructions[4];
-            if (baseInst.OpCode.Code != Code.Ldarg_2)
+            if (baseInst.OpCode.Code != Code.Ldarg_S)
                 throw new InvalidOperationException();
             if (baseInst2.OpCode.Code != Code.Call)
                 throw new InvalidOperationException();

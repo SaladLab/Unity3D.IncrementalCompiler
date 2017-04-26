@@ -13,7 +13,8 @@ namespace Mono.CompilerServices.SymbolWriter
         public static EmitResult EmitWithMdb(this Compilation compilation, Stream peStream, Stream pdbStream = null,
             Stream xmlDocumentationStream = null, Stream win32Resources = null,
             IEnumerable<ResourceDescription> manifestResources = null, EmitOptions options = null,
-            IMethodSymbol debugEntryPoint = null, CancellationToken cancellationToken = default(CancellationToken))
+            IMethodSymbol debugEntryPoint = null, Stream sourceLinkStream = null,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
             if (peStream == null)
             {
@@ -43,8 +44,9 @@ namespace Mono.CompilerServices.SymbolWriter
                 manifestResources,
                 options,
                 debugEntryPoint,
-                testData,
+                sourceLinkStream,
                 null,
+                testData,
                 cancellationToken);
         }
     }
