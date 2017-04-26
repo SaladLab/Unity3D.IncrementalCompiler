@@ -19,7 +19,7 @@ Target "Build" <| fun _ -> buildSolution solution
 
 Target "Package" (fun _ -> 
     // pack IncrementalCompiler.exe with dependent module dlls to packed one
-    let ilrepackExe = (getNugetPackage "ILRepack" "2.0.10") @@ "tools" @@ "ILRepack.exe"
+    let ilrepackExe = (getNugetPackage "ILRepack" "2.0.13") @@ "tools" @@ "ILRepack.exe"
     Shell.Exec(ilrepackExe,
                "/wildcards /out:IncrementalCompiler.packed.exe IncrementalCompiler.exe *.dll",
                "./core/IncrementalCompiler/bin/Release") |> ignore
