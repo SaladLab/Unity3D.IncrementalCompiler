@@ -95,8 +95,10 @@ public class CompilerSettings : EditorWindow
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Version", GetUniversalCompilerVersion());
+        EditorGUI.BeginDisabledGroup(!File.Exists(UcLogFilePath));
         if (GUILayout.Button("Log"))
             ShowUniversalCompilerClientLog();
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.EndHorizontal();
 
         var durations = GetUniversalCompilerLastBuildLogs();
@@ -183,6 +185,10 @@ public class CompilerSettings : EditorWindow
             return _ucLastBuildLog;
 
         _ucLastBuildLog = new[] {"", "", ""};
+        if (!File.Exists(UcLogFilePath)) {
+            return _ucLastBuildLog;
+        }
+        
         try
         {
             var lines = File.ReadAllLines(UcLogFilePath);
